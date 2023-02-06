@@ -78,6 +78,15 @@ void Renderer::DrawLineStrip(const VertexArray& va, Shader& shader, Transform& t
     GLCall(glDrawArrays(GL_LINE_STRIP, 0, count));
 }
 
+void Renderer::DrawLineLoop(const VertexArray& va, Shader& shader, Transform& transform, unsigned int count)
+{
+    shader.use();
+    va.Bind();
+    CALCULATE_MODEL_MATRIX();
+    setUniforms(m_model, shader);
+    GLCall(glDrawArrays(GL_LINE_LOOP, 0, count));
+}
+
 
 
 void Renderer::DrawTri(const VertexArray& va, const Shader& shader)

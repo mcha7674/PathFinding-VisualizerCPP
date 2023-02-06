@@ -4,6 +4,7 @@
 #include <GLAbstraction.h> 
 #include <GLCore.h>
 #include "Base_Models/Quad.h"
+#include "Grid.h"
 
 class AlgoVis : public GLCore::Layer
 {
@@ -17,11 +18,10 @@ public:
 	virtual void OnUpdate(GLCore::Timestep ts) override;
 	virtual void OnImGuiRender() override;
 private:
-	// BODY //
 	Quad s1;
+	Grid grid;
 	////////// AlgoVis Rendering //////////
 	Renderer renderer;
-	void RenderAlgoVis();
 	//////////  UI //////////
 	////////// AlgoVis Camera //////////
 	GLCore::Utils::OrthographicCameraController m_CameraController;

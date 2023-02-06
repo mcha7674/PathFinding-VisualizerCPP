@@ -5,9 +5,10 @@ using namespace GLCore::Utils;
 
 
 AlgoVis::AlgoVis()
-	:Layer("AlgoVis Suite"), m_CameraController((float)Application::Get().GetWindow().GetWidth() / (float)Application::Get().GetWindow().GetHeight(), false, 1.0f) // init camera controller with the window aspect ratio
+	:Layer("C++ Algorithm Visualizer"), 
+	m_CameraController((float)Application::Get().GetWindow().GetWidth() / (float)Application::Get().GetWindow().GetHeight(), false, 1.0f) // init camera controller with the window aspect ratio
 {
-
+	
 }
 
 AlgoVis::~AlgoVis()
@@ -24,7 +25,7 @@ void AlgoVis::OnAttach()
 	// Blending
 	// AntiAliasing 
 
-
+	grid.Init(10, 10);
 }
 
 void AlgoVis::OnDetach()
@@ -47,6 +48,7 @@ void AlgoVis::OnEvent(Event& event)
 		});
 }
 
+
 void AlgoVis::OnUpdate(Timestep ts)
 {
 	// Window Clearing and pause functions 
@@ -58,11 +60,14 @@ void AlgoVis::OnUpdate(Timestep ts)
 		object->body->Circle_shader->use(); // use shader functions
 		object->body->Circle_shader->SetUniformMatrix4fv("viewProjection", m_CameraController.GetCamera().GetViewProjectionMatrix()); // set matrix
 	*/
+	m_CameraController.GetCamera().SetProjection(-0.05f, 10.0f, -0.05f, 10.0f);
 	s1.setTexture("assets/textures/container.jpg");
 	s1.quad_shader->use();
 	s1.quad_shader->SetUniformMatrix4fv("viewProjection", m_CameraController.GetCamera().GetViewProjectionMatrix());
 	// Render AlgoVis //
+	s1.trans.setPosition({ 5.0f, 5.0f, 0.0f });
 	renderer.DrawRect(s1.va, *(s1.ib), *(s1.quad_shader), s1.trans);
+	grid.DrawGrid(renderer, m_CameraController);
 
 }
 

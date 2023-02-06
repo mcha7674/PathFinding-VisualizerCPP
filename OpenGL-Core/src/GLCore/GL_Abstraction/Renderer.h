@@ -45,6 +45,7 @@ public:
 	void DrawCircle(const VertexArray& va, Shader& shader, Transform& transform, float numVertices);
 	void DrawPoints(const VertexArray& va, Shader& shader, Transform& transform, unsigned int count);
 	void DrawLineStrip(const VertexArray& va, Shader& shader, Transform& transform, unsigned int count);
+	void DrawLineLoop(const VertexArray& va, Shader& shader, Transform& transform, unsigned int count);
 
 
 	//// draw triangles
