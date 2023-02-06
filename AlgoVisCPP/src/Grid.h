@@ -7,24 +7,14 @@
 
 enum cellState{VISITED, UNVISITED, VISITING};
 
-static float Vertices[] = {
-	// positions    
-	 1.0f,  1.0f, 0.0f,   // top right
-	 1.0f,  0.0f, 0.0f,   // bottom right
-	 0.0f,  0.0f, 0.0f,   // bottom left
-	 0.0f,  1.0f, 0.0f    // top left 
-};
-
 struct Cell
 {
 	int weight;
 	cellState m_State;
-	Transform pos;
 	Cell() {
 		weight = 0; 
 		m_State = UNVISITED;
 	}
-	
 };
 
 
@@ -44,9 +34,9 @@ private:
 	std::vector<std::vector<Cell>> grid;
 	int width;
 	int height;
-	// Filled in Cell
-	Quad fill;
-
+	// Visit Fills
+	Quad visitedFill;
+	Quad visitingFill;
 
 	// Rendering Properties //
 	Renderer renderer;

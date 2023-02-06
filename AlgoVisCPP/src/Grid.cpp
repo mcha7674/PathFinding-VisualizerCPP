@@ -1,5 +1,11 @@
 #include "Grid.h"
 
+static float Vertices[] = {
+	// positions    
+	 0.0f,  0.0f, 0.0f,   // left coordinate
+	 1.0f,  1.0f, 0.0f,   // right coordinate
+};
+
 Grid::Grid(Renderer& renderer, glm::mat4 ViewProjectionMatrix)
 	:renderer(renderer), ViewProjectionMatrix(ViewProjectionMatrix)
 {
@@ -24,10 +30,19 @@ void Grid::Init(int row, int col) {
 }
 // Draw Grid - using passed in params, render the grid
 void Grid::DrawGrid() {
-	for (int x = 0; x < width; x++) {
-		for (int y = 0; y < height; y++) {
-			grid[x][y].pos.setPosition({ (float)x,(float)y,0.0 });
-			renderer.DrawLineLoop(va, *(cell_shader), grid[x][y].pos, 4);
-		}
+	Transform transV;
+	transV.setScale({ 0.0f, (float)height, 1.0f });
+	// vertical lines
+	for (int x = 0; x <= width; x++) {
+		transV.setPosition({ (float)x, 0.0f, 0.0f });
+		renderer.DrawLineStrip(va, *(cell_shader), transV, 2);
 	}
+	Transform transH;
+	transH.setScale({ (float)width, 0.0f, 1.0f });
+	// horizontal lines
+	for (int y = 0; y <= height; y++) {
+		transH.setPosition({ 0.0f, (float)y, 0.0f });
+		renderer.DrawLineStrip(va, *(cell_shader), transH, 2);
+	}
+	
 }

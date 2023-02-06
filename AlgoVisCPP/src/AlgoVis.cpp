@@ -4,7 +4,7 @@ using namespace GLCore;
 using namespace GLCore::Utils;
 
 
-std::pair<float, float> axisBounds(50, 50);
+std::pair<float, float> axisBounds(20.0f, 20.0f);
 float axisOffset = 0.05;
 
 AlgoVis::AlgoVis()
@@ -36,7 +36,6 @@ void AlgoVis::OnDetach()
 void AlgoVis::OnEvent(Event& event)
 {
 	EventDispatcher dispatcher(event);
-
 	// Arrow Key Bind With Fast Forward
 	dispatcher.Dispatch<KeyPressedEvent>(
 		[&](KeyPressedEvent& e) {
