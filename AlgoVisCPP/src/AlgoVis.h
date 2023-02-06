@@ -18,8 +18,8 @@ public:
 	virtual void OnUpdate(GLCore::Timestep ts) override;
 	virtual void OnImGuiRender() override;
 private:
-	Quad s1;
-	Grid grid;
+	// The Grid
+	Grid *grid;
 	////////// AlgoVis Rendering //////////
 	Renderer renderer;
 	//////////  UI //////////

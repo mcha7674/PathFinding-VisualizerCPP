@@ -4,11 +4,16 @@ using namespace GLCore;
 using namespace GLCore::Utils;
 
 
+std::pair<float, float> axisBounds(50, 50);
+float axisOffset = 0.05;
+
 AlgoVis::AlgoVis()
 	:Layer("C++ Algorithm Visualizer"), 
 	m_CameraController((float)Application::Get().GetWindow().GetWidth() / (float)Application::Get().GetWindow().GetHeight(), false, 1.0f) // init camera controller with the window aspect ratio
 {
-	
+	m_CameraController.GetCamera().SetProjection(0 - axisOffset, axisBounds.first + axisOffset, 0 - axisOffset, axisBounds.first + axisOffset);
+	glm::mat4 ViewProjectionMatrix = m_CameraController.GetCamera().GetViewProjectionMatrix();
+	grid = new Grid(renderer, ViewProjectionMatrix);
 }
 
 AlgoVis::~AlgoVis()
@@ -20,12 +25,7 @@ AlgoVis::~AlgoVis()
 void AlgoVis::OnAttach()
 {
 	EnableGLDebugging();
-	// gl enable prelims //
-	// Depth
-	// Blending
-	// AntiAliasing 
-
-	grid.Init(10, 10);
+	grid->Init(axisBounds.first, axisBounds.first);
 }
 
 void AlgoVis::OnDetach()
@@ -35,9 +35,6 @@ void AlgoVis::OnDetach()
 // Event Handling layer
 void AlgoVis::OnEvent(Event& event)
 {
-	// orthographic camera Event Dispatching (seperate dispatching)
-	// default dispatcher is mouse scrolled and window resize event.
-	m_CameraController.OnEvent(event);
 	EventDispatcher dispatcher(event);
 
 	// Arrow Key Bind With Fast Forward
@@ -53,21 +50,11 @@ void AlgoVis::OnUpdate(Timestep ts)
 {
 	// Window Clearing and pause functions 
 	renderer.Clear(true);
-	// Key Handling updates. If the relevant key is pressed, camera movement is initiated.
-	//m_CameraController.OnUpdate(ts);
-	// set view matrix and orthographic matrix product Uniforms for all Bodies and Trails
-	/*Example:
-		object->body->Circle_shader->use(); // use shader functions
-		object->body->Circle_shader->SetUniformMatrix4fv("viewProjection", m_CameraController.GetCamera().GetViewProjectionMatrix()); // set matrix
-	*/
-	m_CameraController.GetCamera().SetProjection(-0.05f, 10.0f, -0.05f, 10.0f);
-	s1.setTexture("assets/textures/container.jpg");
-	s1.quad_shader->use();
-	s1.quad_shader->SetUniformMatrix4fv("viewProjection", m_CameraController.GetCamera().GetViewProjectionMatrix());
+	// set up the coordinates (view projection matrix)
+	m_CameraController.GetCamera().SetProjection(-0.05f, 50.0f, -0.05f, 50.0f);
+	glm::mat4 ViewProjectionMatrix = m_CameraController.GetCamera().GetViewProjectionMatrix();
 	// Render AlgoVis //
-	s1.trans.setPosition({ 5.0f, 5.0f, 0.0f });
-	renderer.DrawRect(s1.va, *(s1.ib), *(s1.quad_shader), s1.trans);
-	grid.DrawGrid(renderer, m_CameraController);
+	grid->DrawGrid();
 
 }
 
