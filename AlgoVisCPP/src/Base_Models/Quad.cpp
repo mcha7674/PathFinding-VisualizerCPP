@@ -13,13 +13,9 @@ Quad::Quad()
     ib = new IndexBuffer(indices, 6);
     // Create layout
     layout.Push<float>(3); // 3 floats per vertex for position
-    layout.Push<float>(2); // 2 floats poer texture coordinate
-    // Binds Vertex Array and Vartex Buffer
-    // grabs each vertex buffer layout element 
     // Enables each Vertex Attribute Array and and create Attribute pointers
     va.AddBuffer((*vb), layout);
 
-    texture = nullptr;
 }
 
 Quad::~Quad()
@@ -37,14 +33,6 @@ Quad::~Quad()
 
 }
 
-void Quad::setTexture(const char* texturePath)
-{
-    quad_shader->use();
-    quad_shader->SetUniform1i("texture1", 0);
-    texture = new Texture(texturePath);
-    texture->Bind(0);
-
-}
 void Quad::setColor(float r, float g, float b, float a)
 {
     quad_shader->use();

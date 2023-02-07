@@ -3,29 +3,33 @@
 using namespace GLCore;
 using namespace GLCore::Utils;
 
-
-std::pair<float, float> axisBounds(20.0f, 20.0f);
-float axisOffset = 0.05;
+static float MouseXPos = 0.0;
+static float MouseYPos = 0.0;
 
 AlgoVis::AlgoVis()
 	:Layer("C++ Algorithm Visualizer"), 
-	m_CameraController((float)Application::Get().GetWindow().GetWidth() / (float)Application::Get().GetWindow().GetHeight(), false, 1.0f) // init camera controller with the window aspect ratio
+	m_CameraController((float)(float)Application::Get().GetWindow().GetWidth() / (float)Application::Get().GetWindow().GetHeight(), false, 1.0f) // init camera controller with the window aspect ratio
 {
-	m_CameraController.GetCamera().SetProjection(0 - axisOffset, axisBounds.first + axisOffset, 0 - axisOffset, axisBounds.first + axisOffset);
+	coordSys = { 50.0f , 50.0f };
+	gridPadding = 0.2f;
+	m_CameraController.GetCamera().SetProjection(0.0f - gridPadding, coordSys[0] + gridPadding, 0.0f - gridPadding, coordSys[1] + gridPadding);
 	glm::mat4 ViewProjectionMatrix = m_CameraController.GetCamera().GetViewProjectionMatrix();
-	grid = new Grid(renderer, ViewProjectionMatrix);
+	grid = std::make_unique<Grid>(renderer, ViewProjectionMatrix);
 }
 
 AlgoVis::~AlgoVis()
 {
-
 }
 
 // AlgoVis's gl prelims 
 void AlgoVis::OnAttach()
 {
 	EnableGLDebugging();
-	grid->Init(axisBounds.first, axisBounds.first);
+	// make the rows go a certain percentage below the top heading to make room for UI
+	int amountOffTop = 0.1 * Application::Get().GetWindow().GetHeight();
+	int newRowHeight = coordSys[0] - amountOffTop * (coordSys[0] /(Application::Get().GetWindow().GetHeight() - amountOffTop) );
+	grid->Init(newRowHeight, (int)coordSys[1]); // rows, columns
+	std::cout << "Row Height: " << newRowHeight << " Col Width: " << (int)coordSys[1] << std::endl;
 }
 
 void AlgoVis::OnDetach()
@@ -36,11 +40,43 @@ void AlgoVis::OnDetach()
 void AlgoVis::OnEvent(Event& event)
 {
 	EventDispatcher dispatcher(event);
-	// Arrow Key Bind With Fast Forward
-	dispatcher.Dispatch<KeyPressedEvent>(
-		[&](KeyPressedEvent& e) {
-			//std::cout << "Key Pressed " << e.GetKeyCode() << std::endl;
-			return true;
+
+	// Store Transformed (to coordinate System) Mouse Positions
+	dispatcher.Dispatch<MouseMovedEvent>(
+		[&](MouseMovedEvent& e) {
+			// X & Y will be from 0 to Screen Height/width
+			// Need to transform the mouse positions in screen space into our Coordinate system
+			MouseXPos = e.GetX() * (coordSys[0] / Application::Get().GetWindow().GetWidth());
+			MouseYPos = coordSys[1] - (e.GetY() * (coordSys[1] / Application::Get().GetWindow().GetHeight()));
+			return true; // event handled
+		});
+	// Register Mouse Button Events
+	dispatcher.Dispatch<MouseButtonReleasedEvent>(
+		[&](MouseButtonReleasedEvent& e) {
+			std::cout << "Mouse Released" << e.GetMouseButton() << std::endl;
+			// only register if within grid bounds
+			//
+			if (e.GetMouseButton() == MOUSE_BUTTON_1) {
+				std::cout << "Pressed Mouse Button on cell (" << (int)MouseXPos << ", " << (int)MouseYPos<<")" << std::endl;
+				// Only Register If clicked on Grid
+				// 
+				// If grid start point not set yet, set it now.
+				if (!grid->getGridProps()->startPointSet) {
+					grid->getGridProps()->startPointSet = true;
+					grid->visitCell((int)MouseYPos, (int)MouseXPos, true, false);
+				} else if(!grid->getGridProps()->endPointSet) {
+					grid->getGridProps()->endPointSet = true;
+					grid->visitCell((int)MouseYPos, (int)MouseXPos, false, true);
+				} // This portion below is for testing purposes
+				else {
+					grid->visitCell((int)MouseYPos, (int)MouseXPos);
+					std::cout << "State: " << grid->getGrid()[(int)MouseYPos][(int)MouseXPos].m_State << std::endl;
+				}
+			}
+			else if (e.GetMouseButton() == MOUSE_BUTTON_2) {
+				grid->resetGrid();
+			}
+			return true; // event handled
 		});
 }
 
@@ -48,14 +84,18 @@ void AlgoVis::OnEvent(Event& event)
 void AlgoVis::OnUpdate(Timestep ts)
 {
 	// Window Clearing and pause functions 
+	Application::Get().GetWindow().Clear(241.0f /255.0f, 240.0f /255.0f, 255.0f /255.0f, 1.0f);
 	renderer.Clear(true);
-	// set up the coordinates (view projection matrix)
-	m_CameraController.GetCamera().SetProjection(-0.05f, 50.0f, -0.05f, 50.0f);
-	glm::mat4 ViewProjectionMatrix = m_CameraController.GetCamera().GetViewProjectionMatrix();
-	// Render AlgoVis //
-	grid->DrawGrid();
+	grid->setGridColor(0.0f,0.0f,0.0f);
+	
 
+	// Draw The Grid //
+	grid->DrawGrid();
 }
+
+
+
+
 
 void AlgoVis::OnImGuiRender()
 {
@@ -81,25 +121,6 @@ void AlgoVis::OnImGuiRender()
 }
 
 
-
-//void AlgoVis::OnUpdate(Timestep ts)
-//{
-//	// Window Clearing and pause functions 
-//	renderer.Clear(true);
-//	// Key Handling updates. If the relevant key is pressed, camera movement is initiated.
-//	//m_CameraController.OnUpdate(ts);
-//	// set view matrix and orthographic matrix product Uniforms for all Bodies and Trails
-//	/*Example:
-//		object->body->Circle_shader->use(); // use shader functions
-//		object->body->Circle_shader->SetUniformMatrix4fv("viewProjection", m_CameraController.GetCamera().GetViewProjectionMatrix()); // set matrix
-//	*/
-//	s1.setTexture("assets/textures/container.jpg");
-//	s1.quad_shader->use();
-//	s1.quad_shader->SetUniformMatrix4fv("viewProjection", m_CameraController.GetCamera().GetViewProjectionMatrix());
-//	// Render AlgoVis //
-//	renderer.DrawRect(s1.va, *(s1.ib), *(s1.quad_shader), s1.trans);
-//
-//}
 
 
 

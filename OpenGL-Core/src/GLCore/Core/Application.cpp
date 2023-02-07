@@ -32,7 +32,7 @@ namespace GLCore {
 		}
 
 		GLCORE_ASSERT(!s_Instance, "Application already exists!");
-		s_Instance = this;
+		s_Instance = this; // define the global singleton instance to be this application Object.
 
 		// Application Creates the Unique Window Pointer (Create() returns WindowsWindow Instance which calls init() as default Construct)	
 		// Set as a unique pointer so that when application terminates we don't have to delete
@@ -77,6 +77,7 @@ namespace GLCore {
 
 	void Application::Run()
 	{
+		// Main Application Loop
 		while (m_Running)
 		{
 			float time = (float)glfwGetTime();
@@ -84,14 +85,17 @@ namespace GLCore {
 			m_LastFrameTime = time;
 			DeltaTime = timestep;
 
+			// Run Each Layer's Update Function
 			for (Layer* layer : m_LayerStack)
 				layer->OnUpdate(timestep);
 
+			// IMGUI
 			m_ImGuiLayer->Begin();
 			for (Layer* layer : m_LayerStack)
 				layer->OnImGuiRender();
 			m_ImGuiLayer->End();
 
+			// Run Window Update Function
 			m_Window->OnUpdate();
 		}
 	}
