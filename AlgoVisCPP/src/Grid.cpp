@@ -20,7 +20,7 @@ Grid::Grid(Renderer& renderer, glm::mat4 ViewProjectionMatrix)
 	layout.Push<float>(3); // 3 floats per vertex for position
 	va.AddBuffer((*vb), layout);
 	// Adjust the Scaling for the Colored Cell Quads
-	fillQuad.trans.setScale( {0.88f,0.88f,0.0f} );
+	fillQuad.trans.setScale( {1.0f,1.0f,0.0f} );
 	// Init GridProperties object
 	gridProps = std::make_shared<GridProperties>();
 	setGridColor(gridProps->gridColor);
@@ -29,13 +29,22 @@ Grid::Grid(Renderer& renderer, glm::mat4 ViewProjectionMatrix)
 
 // init Grid - fill grid with defaults with correct size.
 void Grid::Init(int row, int col) {
-	grid = std::vector<std::vector<Cell>>(row, std::vector<Cell>(col, Cell()));
+	grid = std::vector<std::vector<Cell>>(row, std::vector<Cell>(col, Cell() ));
+	// Fill Coordinates
+	for (int i = 0; i < row; i++) {
+		for (int j = 0; j < col; j++) {
+			grid[i][j].coords = {i, j};
+			grid[i][j].parentCell = {i, j};
+		}
+	}
 	gridProps->height = row;
 	gridProps->width = col;
+	
 }
 
-// Draw Grid - Draws grid using line strips.
-void Grid::DrawGrid() {
+// Draws the Grid Lines
+void Grid::DrawGridLines()
+{
 	// Draw Grid Lines //
 	grid_shader->use();
 	grid_shader->SetUniformMatrix4fv("viewProjection", ViewProjectionMatrix);
@@ -53,38 +62,51 @@ void Grid::DrawGrid() {
 		transH.setPosition({ 0.0f, (float)y, 0.0f });
 		renderer.DrawLineStrip(va, *(grid_shader), transH, 2);
 	}
+}
+
+// Draw Grid - Fills in Grid.
+void Grid::DrawGrid() {
 	// Iterate Through and Fill grid with colored Quads where needed //
 	fillQuad.quad_shader->use();
 	fillQuad.quad_shader->SetUniformMatrix4fv("viewProjection", ViewProjectionMatrix);
 	// Only Execute code below if both start and Endpoint has been set and algorithm chosen
-	for (int i = 0; i < gridProps->width; i++) {
-		for (int j = 0; j < gridProps->height; j++) {
+	for (int i = 0; i < gridProps->height; i++) {
+		for (int j = 0; j < gridProps->width; j++) {
 			// Check if start and end, if so, render colored cell
-			if (grid[j][i].isStart) {
+			if (grid[i][j].m_Type == cellType::START) {
 				fillQuad.setColor(0.0f, 1.0f, 0.0f, 1.0f);
-				fillQuad.trans.setPosition({ (float)i + 0.05f, (float)j + 0.05f, 0.0f });
+				fillQuad.trans.setPosition({ (float)j, (float)i, 0.0f });
 				renderer.DrawRect(fillQuad.va, *(fillQuad.ib), *(fillQuad.quad_shader), fillQuad.trans);
 			}
-			else if (grid[j][i].isEnd) {
+			else if (grid[i][j].m_Type == cellType::END) {
 				fillQuad.setColor(1.0f, 0.0f, 0.0f, 1.0f);
-				fillQuad.trans.setPosition({ (float)i + 0.05f, (float)j + 0.05f, 0.0f });
+				fillQuad.trans.setPosition({ (float)j, (float)i, 0.0f });
+				renderer.DrawRect(fillQuad.va, *(fillQuad.ib), *(fillQuad.quad_shader), fillQuad.trans);
+			}
+			else if (grid[i][j].m_Type == cellType::WALL) {
+				fillQuad.setColor(0.0f, 0.0f, 0.0f, 1.0f);
+				fillQuad.trans.setPosition({ (float)j, (float)i, 0.0f });
+				renderer.DrawRect(fillQuad.va, *(fillQuad.ib), *(fillQuad.quad_shader), fillQuad.trans);
+			}
+			else if (grid[i][j].m_Type == cellType::PATH) {
+				fillQuad.setColor(1.0f, 1.0f, 0.0f, 1.0f);
+				fillQuad.trans.setPosition({ (float)j, (float)i, 0.0f });
 				renderer.DrawRect(fillQuad.va, *(fillQuad.ib), *(fillQuad.quad_shader), fillQuad.trans);
 			}
 			else {
-				switch (grid[j][i].m_State)
+				switch (grid[i][j].m_State)
 				{
-				case VISITED:
-					fillQuad.setColor(0.0f, 0.0f, 1.0f, 1.0f);
-					fillQuad.trans.setPosition({ (float)i + 0.05f, (float)j + 0.05f, 0.0f });
+				case cellState::VISITED:
+					fillQuad.setColor(0.3f, 0.3f, 1.0f, 0.8f);
+					fillQuad.trans.setPosition({ (float)j, (float)i, 0.0f });
 					renderer.DrawRect(fillQuad.va, *(fillQuad.ib), *(fillQuad.quad_shader), fillQuad.trans);
 					break;
-				case VISITING:
+				case cellState::VISITING:
 					fillQuad.setColor(0.0f, 1.0f, 0.0f, 1.0f);
-					fillQuad.trans.setPosition({ (float)i + 0.05f, (float)j + 0.05f, 0.0f });
+					fillQuad.trans.setPosition({ (float)j, (float)i, 0.0f });
 					renderer.DrawRect(fillQuad.va, *(fillQuad.ib), *(fillQuad.quad_shader), fillQuad.trans);
 					break;
-				case UNVISITED:
-					// if unvisited do not draw a colored quad!
+				case cellState::UNVISITED: // if unvisited, no need to render a quad.
 				default:
 					break;
 				}
@@ -94,31 +116,56 @@ void Grid::DrawGrid() {
 	}
 }
 
-// Function to mark cells
-void Grid::visitCell(int x, int y, bool isStart, bool isEnd)
-{
-	// If visiting cell is the start/end, mark it down in cell properties and mark as visited
-	if (isStart) grid[x][y].isStart = true;
-	else if (isEnd) grid[x][y].isEnd = true;
 
-	if (grid[x][y].m_State == UNVISITED) {
-		grid[x][y].m_State = VISITED;
+void Grid::setCellState(int row, int col, cellState state)
+{
+	grid[row][col].m_State = state;
+}
+
+void Grid::setCellType(int row, int col, cellType type)
+{
+	std::pair<int, int> currCoord = { row, col };
+	// only set a WALL type if current cell is not start or End cell
+	switch (type)
+	{
+	case cellType::START:
+		if (gridProps->endCoord == currCoord) break;
+		gridProps->startCoord = { row, col };
+		grid[row][col].m_Type = type;
+		grid[row][col].m_State = cellState::VISITED;
+		
+		break;
+	case cellType::END:
+		if (gridProps->startCoord == currCoord) break;
+		gridProps->endCoord = { row, col };
+		grid[row][col].m_Type = type;
+		break;
+	case cellType::WALL:
+		if (gridProps->startCoord == currCoord || gridProps->endCoord == currCoord) break;
+		grid[row][col].m_Type = type;
+		break;
+	case cellType::PATH:
+		grid[row][col].m_Type = type;
+		break;
+	default:
+		break;
 	}
-	else if (grid[x][y].m_State == VISITED) {
-		grid[x][y].m_State == VISITING;
-	}
+}
+
+void Grid::setCellParent(int r0, int c0, int r, int c)
+{
+	grid[r][c].parentCell = { r0, c0 };
 }
 
 void Grid::resetGrid()
 {
-	// Rest Relevant Grid Variables
-	//
-	// Mark all Cells as unvisited
-	for (int i = 0; i < gridProps->width; i++) {
-		for (int j = 0; j < gridProps->height; j++) {
-			grid[j][i].m_State = UNVISITED;
+	for (int i = 0; i < gridProps->height; i++) {
+		for (int j = 0; j < gridProps->width; j++) {
+			grid[i][j].reset(); // reset each cell
 		}
 	}
+	// reset Grid Properties
+	gridProps->reset();
 }
 
 void Grid::setGridColor(float r, float g, float b, float a)

@@ -1,8 +1,14 @@
 #pragma once
-
+#include <chrono>
+#include <thread>
 
 namespace Algorithms {
-	enum class AlgoType
+	// chrono settings
+	using namespace std::this_thread;
+	using namespace std::chrono_literals;
+	using std::chrono::system_clock;
+
+	enum class Type
 	{
 		None = 0,
 		BFS, DFS,
@@ -10,25 +16,13 @@ namespace Algorithms {
 		PostTraversal, PreTraversal
 	};
 
-	enum AlgoCategory
+	enum class Category
 	{
 		None = 0,
-		PathFinding = 1 << 0,
-		Sorting = 1 << 1,
-		TreeTraversal = 1 << 2,
-
+		PathFinding,
+		Sorting,
+		TreeTraversal
 	};
-
-	/* Pure Abstract Algrithms Class */
-	class Algorithm
-	{
-	public:
-		// No constructor needed, this class is never instantiated
-		virtual ~Algorithm() = default;
-		// Step teh algorithm
-
-	};
-
 }
 	
 

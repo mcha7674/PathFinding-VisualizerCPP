@@ -5,19 +5,23 @@
 #include <vector>
 #include "Base_Models/Quad.h"
 
-enum cellState{VISITED, UNVISITED, VISITING};
+enum class cellState{VISITED = 0, UNVISITED, VISITING};
+enum class cellType{NORMAL = 0, START, END, WALL, PATH};
 
 struct Cell
 {
+	std::pair<int, int> coords;
+	std::pair<int, int> parentCell; // Keep track of cell visited by for shortest path
 	int weight;
-	bool isStart;
-	bool isEnd;
+	cellType m_Type;
 	cellState m_State;
-	Cell() {
-		weight = 0; 
-		m_State = UNVISITED;
-		isStart = false;
-		isEnd = false;
+	// Cell Methods
+	Cell() { reset(); }
+	void reset()
+	{
+		weight = 0;
+		m_State = cellState::UNVISITED;
+		m_Type = cellType::NORMAL;
 	}
 };
 
@@ -25,9 +29,19 @@ struct Cell
 struct GridProperties {
 	int width = 0;
 	int height = 0;
-	bool startPointSet = false;
-	bool endPointSet = false;
 	glm::vec4 gridColor = { 0.0f,0.0f,0.0f,1.0f };
+
+	bool startPointSet;
+	bool endPointSet;
+	std::pair<int, int>startCoord;
+	std::pair<int, int>endCoord;
+	GridProperties() { reset(); }
+	void reset() {
+		startPointSet = false;
+		endPointSet = false;
+		startCoord = { 0, 0 };
+		endCoord = { 0, 0 };
+	}
 };
 
 class Grid
@@ -39,17 +53,21 @@ public:
 	void Init(int row, int col);
 	// Draw Grid - using passed in params, render the grid
 	void DrawGrid();
+	void DrawGridLines();
 	void resetGrid();
-	// Function to fill a cell with the correct color if visiting and update its state.
-	void visitCell(int x, int y, bool isStart = false, bool isEnd = false);
-
-	// Getters //
+	// Cell Setter Functions
+	void setCellState(int row, int col, cellState state);
+	void setCellType(int row, int col, cellType type);
+	void setCellParent(int r0, int c0, int r, int c);
+	// Cell Getters
+	inline Cell getCell(int r, int c) { return grid[r][c]; }
+	inline std::pair<int,int> getCellParent(int r, int c) { return grid[r][c].parentCell; }
+	// Grid Getters //
 	std::vector<std::vector<Cell>> getGrid() { return grid; }
 	std::shared_ptr<GridProperties> getGridProps() { return gridProps; }
-	// Setters //
+	// Grid Setters //
 	void setGridColor(float r = 0.0f, float g = 0.0f, float b = 0.0f, float a = 1.0f);
 	void setGridColor(glm::vec4 rgba = { 1.0f,1.0f,1.0f,1.0f });
-
 private:
 	std::shared_ptr<GridProperties> gridProps;
 	std::vector<std::vector<Cell>> grid;
