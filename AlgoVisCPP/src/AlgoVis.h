@@ -33,25 +33,20 @@ private:
 	struct UserInput
 	{
 		bool AlgorithmStart;
-		Algorithms::Category algoCategory;
 		Algorithms::Type algoType;
 		UserInput() { reset(); }
 		void reset() 
 		{
 			AlgorithmStart = false;
-			algoCategory = Algorithms::Category::None;
 			algoType = Algorithms::Type::None;
 		}
 	};
-	std::unique_ptr<UserInput> input;
+	// Algorithms //
 	std::unique_ptr<Algorithms::PathFinder> pathFindingAlgorithms;
-	// Program States //
-	bool algoActive;
-	bool algoCompleted;
-	bool endReached;
 	////////// AlgoVis Rendering //////////
 	Renderer renderer;
 	//////////  UI //////////
+	std::unique_ptr<UserInput> input; // user input
 	////////// AlgoVis Camera //////////
 	GLCore::Utils::OrthographicCameraController m_CameraController;
 	float screenPadding; // amount of padding between the grid borders and the edge of the screen.

@@ -16,13 +16,6 @@ namespace Algorithms {
 		PostTraversal, PreTraversal
 	};
 
-	enum class Category
-	{
-		None = 0,
-		PathFinding,
-		Sorting,
-		TreeTraversal
-	};
 }
 	
 
