@@ -22,8 +22,7 @@ Grid::Grid(Renderer& renderer, glm::mat4 ViewProjectionMatrix)
 	// Adjust the Scaling for the Colored Cell Quads
 	fillQuad.trans.setScale( {1.0f,1.0f,0.0f} );
 	// Init GridProperties object
-	gridProps = std::make_shared<GridProperties>();
-	setGridColor(gridProps->gridColor);
+	setGridColor(gridProps.gridColor);
 }
 
 
@@ -37,8 +36,8 @@ void Grid::Init(int row, int col) {
 			grid[i][j].parentCell = {i, j};
 		}
 	}
-	gridProps->height = row;
-	gridProps->width = col;
+	gridProps.height = row;
+	gridProps.width = col;
 	
 }
 
@@ -49,16 +48,16 @@ void Grid::DrawGridLines()
 	grid_shader->use();
 	grid_shader->SetUniformMatrix4fv("viewProjection", ViewProjectionMatrix);
 	Transform transV;
-	transV.setScale({ 0.0f, (float)gridProps->height, 1.0f });
+	transV.setScale({ 0.0f, (float)gridProps.height, 1.0f });
 	// vertical lines
-	for (int x = 0; x <= gridProps->width; x++) {
+	for (int x = 0; x <= gridProps.width; x++) {
 		transV.setPosition({ (float)x, 0.0f, 0.0f });
 		renderer.DrawLineStrip(va, *(grid_shader), transV, 2);
 	}
 	Transform transH;
-	transH.setScale({ (float)gridProps->width, 0.0f, 1.0f });
+	transH.setScale({ (float)gridProps.width, 0.0f, 1.0f });
 	// horizontal lines
-	for (int y = 0; y <= gridProps->height; y++) {
+	for (int y = 0; y <= gridProps.height; y++) {
 		transH.setPosition({ 0.0f, (float)y, 0.0f });
 		renderer.DrawLineStrip(va, *(grid_shader), transH, 2);
 	}
@@ -70,8 +69,8 @@ void Grid::DrawGrid() {
 	fillQuad.quad_shader->use();
 	fillQuad.quad_shader->SetUniformMatrix4fv("viewProjection", ViewProjectionMatrix);
 	// Only Execute code below if both start and Endpoint has been set and algorithm chosen
-	for (int i = 0; i < gridProps->height; i++) {
-		for (int j = 0; j < gridProps->width; j++) {
+	for (int i = 0; i < gridProps.height; i++) {
+		for (int j = 0; j < gridProps.width; j++) {
 			// Check if start and end, if so, render colored cell
 			if (grid[i][j].m_Type == cellType::START) {
 				fillQuad.setColor(0.0f, 1.0f, 0.0f, 1.0f);
@@ -129,22 +128,35 @@ void Grid::setCellType(int row, int col, cellType type)
 	switch (type)
 	{
 	case cellType::START:
-		if (gridProps->endCoord == currCoord) break;
-		gridProps->startCoord = { row, col };
+		gridProps.startPointSet = true;
+		if (gridProps.endCoord == currCoord) break;
+		// if Start node has been set already, reset it to a normal cell and set this new one
+		if (gridProps.startPointSet) {
+			grid[gridProps.startCoord.first][gridProps.startCoord.second].m_Type = cellType::NORMAL;
+		}
+		gridProps.startCoord = { row, col };
 		grid[row][col].m_Type = type;
 		grid[row][col].m_State = cellState::VISITED;
-		
 		break;
 	case cellType::END:
-		if (gridProps->startCoord == currCoord) break;
-		gridProps->endCoord = { row, col };
+		gridProps.endPointSet = true;
+		if (gridProps.startCoord == currCoord) break;
+		// if End node has been set already, reset it to a normal cell and set this new one
+		if (gridProps.endPointSet) {
+			grid[gridProps.endCoord.first][gridProps.endCoord.second].m_Type = cellType::NORMAL;
+		}
+		gridProps.endCoord = { row, col };
 		grid[row][col].m_Type = type;
 		break;
 	case cellType::WALL:
-		if (gridProps->startCoord == currCoord || gridProps->endCoord == currCoord) break;
+		// dont make wall if trying to change the start or end nodes
+		if (gridProps.startCoord == currCoord || gridProps.endCoord == currCoord) break;
 		grid[row][col].m_Type = type;
 		break;
 	case cellType::PATH:
+		grid[row][col].m_Type = type;
+		break;
+	case cellType::NORMAL:
 		grid[row][col].m_Type = type;
 		break;
 	default:
@@ -159,14 +171,16 @@ void Grid::setCellParent(int r0, int c0, int r, int c)
 
 void Grid::resetGrid()
 {
-	for (int i = 0; i < gridProps->height; i++) {
-		for (int j = 0; j < gridProps->width; j++) {
+	for (int i = 0; i < gridProps.height; i++) {
+		for (int j = 0; j < gridProps.width; j++) {
 			grid[i][j].reset(); // reset each cell
 		}
 	}
 	// reset Grid Properties
-	gridProps->reset();
+	gridProps.reset();
 }
+
+
 
 void Grid::setGridColor(float r, float g, float b, float a)
 {
@@ -177,4 +191,15 @@ void Grid::setGridColor(glm::vec4 rgba)
 {
 	grid_shader->use();
 	grid_shader->SetUniformVec4fv("u_Color", rgba);
+}
+// Unvisit every visited grid and set path cells back to normal
+void Grid::resetGridStates()
+{
+	for (int i = 0; i < gridProps.height; i++) {
+		for (int j = 0; j < gridProps.width; j++) {
+			if (grid[i][j].isPathCell()) { setCellType(i, j, cellType::NORMAL); }
+			setCellState(i, j, cellState::UNVISITED);
+			setCellParent(i, j, i, j); // reset cell parents to themselves.
+		}
+	}
 }

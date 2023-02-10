@@ -6,8 +6,8 @@ namespace Algorithms {
 	bool PathFinder::bfs(std::pair<int, int>startCoords, std::shared_ptr<Grid> m_Grid)
 	{
 		std::cout << "RUNNING BFS ALGO..." << std::endl;
-		int rowHeight = m_Grid->getGridProps()->height;
-		int colWidth = m_Grid->getGridProps()->width;
+		int rowHeight = m_Grid->getGridProps().height;
+		int colWidth = m_Grid->getGridProps().width;
 		// clear current queue
 		reset();
 		// Add start cell to queue

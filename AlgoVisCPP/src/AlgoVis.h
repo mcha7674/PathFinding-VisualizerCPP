@@ -24,6 +24,7 @@ public:
 
 	// Reset inputs function
 	void VisReset();
+	bool isMouseOnGrid();
 
 private:
 	// The Grid //

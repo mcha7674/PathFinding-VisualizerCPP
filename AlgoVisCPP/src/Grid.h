@@ -22,7 +22,9 @@ struct Cell
 		weight = 0;
 		m_State = cellState::UNVISITED;
 		m_Type = cellType::NORMAL;
+		parentCell = coords;
 	}
+	inline bool isPathCell() { if (m_Type == cellType::PATH) { return true; } return false; };
 };
 
 // Grid Properties //
@@ -42,6 +44,7 @@ struct GridProperties {
 		startCoord = { 0, 0 };
 		endCoord = { 0, 0 };
 	}
+	bool isReady() { if (startPointSet && endPointSet) { return true; } return false; }
 };
 
 class Grid
@@ -55,21 +58,26 @@ public:
 	void DrawGrid();
 	void DrawGridLines();
 	void resetGrid();
+	void resetGridStates();
 	// Cell Setter Functions
 	void setCellState(int row, int col, cellState state);
 	void setCellType(int row, int col, cellType type);
 	void setCellParent(int r0, int c0, int r, int c);
 	// Cell Getters
 	inline Cell getCell(int r, int c) { return grid[r][c]; }
+	inline cellState getCellState(int r, int c) { return grid[r][c].m_State; }
+	inline cellType getCellType(int r, int c) { return grid[r][c].m_Type; }
 	inline std::pair<int,int> getCellParent(int r, int c) { return grid[r][c].parentCell; }
+	inline bool isGridReady() { return gridProps.isReady(); }
 	// Grid Getters //
 	std::vector<std::vector<Cell>> getGrid() { return grid; }
-	std::shared_ptr<GridProperties> getGridProps() { return gridProps; }
+	GridProperties getGridProps() { return gridProps; }
 	// Grid Setters //
 	void setGridColor(float r = 0.0f, float g = 0.0f, float b = 0.0f, float a = 1.0f);
 	void setGridColor(glm::vec4 rgba = { 1.0f,1.0f,1.0f,1.0f });
+	
 private:
-	std::shared_ptr<GridProperties> gridProps;
+	GridProperties gridProps;
 	std::vector<std::vector<Cell>> grid;
 	// A cell Is filled with a color
 	Quad fillQuad;

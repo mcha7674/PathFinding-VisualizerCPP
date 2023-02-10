@@ -3,13 +3,16 @@
 using namespace GLCore;
 using namespace GLCore::Utils;
 
+// Mouse Coordinate States
 static float MouseXPos = 0.0;
 static float MouseYPos = 0.0;
+static int row = (int)MouseYPos;
+static int col = (int)MouseXPos;
 static bool mouseBPressed = false;
 // Program States //
-static bool algoActive = false;
-static bool algoCompleted = false;
+static bool gridAltered = false;
 static bool endReached = false;
+static bool algoCalculating = false;
 
 AlgoVis::AlgoVis()
 	:Layer("C++ Algorithm Visualizer"), 
@@ -33,7 +36,7 @@ AlgoVis::AlgoVis()
 	int newRowHeight = coordSys[0] - amountOffTop * (coordSys[0] / (Application::Get().GetWindow().GetHeight() - amountOffTop));
 	// Init Grid
 	grid->Init(newRowHeight, (int)coordSys[1]); // rows, columns
-	std::cout << "Row Height: " << grid->getGridProps()->height << " Col Width: " << grid->getGridProps()->width << std::endl;
+	std::cout << "Row Height: " << grid->getGridProps().height << " Col Width: " << grid->getGridProps().width << std::endl;
 }
 AlgoVis::~AlgoVis()
 {
@@ -46,12 +49,10 @@ void AlgoVis::OnAttach()
 void AlgoVis::OnDetach()
 {
 }
-////////// Event Handling layer /////////////
+////////// Event Handling /////////////
 void AlgoVis::OnEvent(Event& event)
 { // every time an event is triggered, this function is called
-	// Mouse Coordinate States
-	int row = (int)MouseYPos;
-	int col = (int)MouseXPos;
+	gridAltered = false;
 	// Register Mouse Button Events
 	EventDispatcher dispatcher(event);
 	// Events Applied Everywhere //
@@ -61,27 +62,31 @@ void AlgoVis::OnEvent(Event& event)
 			// Need to transform the mouse positions in screen space into our Coordinate system
 			MouseXPos = e.GetX() * (coordSys[0] / Application::Get().GetWindow().GetWidth());
 			MouseYPos = coordSys[1] - (e.GetY() * (coordSys[1] / Application::Get().GetWindow().GetHeight()));
+			row = MouseYPos;
+			col = MouseXPos;
 			std::cout << "With Mouse Coords of (" << row << ", " << col << ")" << std::endl;
 			return true; // event handled
 		});
+	std::cout << "Mouse On Grid: " << std::boolalpha << isMouseOnGrid() << std::endl;
+
 	 // Events for the grid only //
-	if ((int)MouseXPos < grid->getGridProps()->width && (int)MouseYPos < grid->getGridProps()->height && !algoActive)
+	if ( isMouseOnGrid()  && !algoCalculating)
 	{
 		dispatcher.Dispatch<MouseButtonReleasedEvent>(
 			[&](MouseButtonReleasedEvent& e) {
+				gridAltered = true;
 				mouseBPressed = false;
 				// only register if within grid bounds
 				if (e.GetMouseButton() == MOUSE_BUTTON_1) {
 					// If grid start point not set yet, set it now.
-					if (!grid->getGridProps()->startPointSet) {
-						grid->getGridProps()->startPointSet = true;
+					if (!grid->getGridProps().startPointSet) {
 						grid->setCellType(row, col, cellType::START);
 						grid->setCellState(row, col, cellState::VISITED);
 					}
-					else if (!grid->getGridProps()->endPointSet) {
-						grid->getGridProps()->endPointSet = true;
+					else if (!grid->getGridProps().endPointSet) {
 						grid->setCellType(row, col, cellType::END);
 					}
+					grid->resetGridStates(); // after making changed, reset grid states for next algorithm run
 				}
 				return true; // event handled
 			});
@@ -93,16 +98,19 @@ void AlgoVis::OnEvent(Event& event)
 			});
 		dispatcher.Dispatch<MouseMovedEvent>(
 			[&](MouseMovedEvent& e) {
+				row = coordSys[1] - (e.GetY() * (coordSys[1] / Application::Get().GetWindow().GetHeight()));
+				col = e.GetX() * (coordSys[0] / Application::Get().GetWindow().GetWidth());
 				// while the button is pressed and start and end point already set, place down walls!
-				if (grid->getGridProps()->startPointSet && grid->getGridProps()->endPointSet && mouseBPressed) 
+				if (grid->isGridReady() && mouseBPressed && isMouseOnGrid())
+				{
+					std::cout << "Adding Cell (" << row << ", " << col <<")" << std::endl;
+					gridAltered = true;
 					grid->setCellType(row, col, cellType::WALL);
+				}
 				return true;
 			});
-		
 	}
-	
 }	
-
 ////////// Game Loop Layer /////////////
 void AlgoVis::OnUpdate(Timestep ts)
 {
@@ -111,26 +119,36 @@ void AlgoVis::OnUpdate(Timestep ts)
 	renderer.Clear(true);
 	grid->setGridColor(0.0f,0.0f,0.0f);
 	// Only execute algorithms if start point and endpoint set and algo made to be active...
-	if (grid->getGridProps()->startPointSet && grid->getGridProps()->endPointSet && algoActive)
+	if (grid->isGridReady() && gridAltered)
 	{
+		algoCalculating = true;
 		// execute algorithm and update state.
-		endReached = pathFindingAlgorithms->bfs(grid->getGridProps()->startCoord, grid);
-		algoCompleted = true;
-		algoActive = false;
-		std::cout << "ALGORITHM FINISHED" << std::endl;	
+		endReached = pathFindingAlgorithms->bfs(grid->getGridProps().startCoord, grid);
+		std::cout << "ALGORITHM FINISHED" << std::endl;
+		algoCalculating = false;
 	} 
 	grid->DrawGrid();
 	grid->DrawGridLines();
 }
 
-
+/////// HELPER FUNCTIONS ///////
 void AlgoVis::VisReset()
 {
 	// Reset the Grid (Grid Properties and Grid Cells)
 	grid->resetGrid();
+	// Reset Inputs
 	input->reset();
-	algoActive = false;
+	// Rest States
 	std::cout << "Reset Application" << std::endl;
+}
+
+bool AlgoVis::isMouseOnGrid()
+{
+	if( col < grid->getGridProps().width && row < grid->getGridProps().height)
+	{
+		return true;
+	}
+	return false;
 }
 
 
@@ -161,22 +179,22 @@ void AlgoVis::OnImGuiRender()
 
 	// Start Button //
 	//style->backg = ImVec4(0.0f, 0.0f, 0.0f, 1.00f);
-	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(20, 20, 100, 1));
-	ImGui::SetNextWindowBgAlpha(0.8f); // Transparent background
-	ImGui::SetNextWindowPos(ImVec2((work_pos.x + work_size.x) * 0.5f, work_pos.y + 20.0f), ImGuiCond_Always, ImVec2(0.5f, 0.0f));
-	if (ImGui::Begin("START", NULL, window_flags)) {
-		ImGui::SetWindowFontScale(2.0f);
-		if (ImGui::Button("START"))
-		{
-			if (!algoActive)
-			{
-				// only set to true if algorithm chosen
-				if ( input->algoType != Algorithms::Type::None )
-					algoActive = true;
-				std::cout << "Started Algorithm" << std::endl;
-			}	
-		}
-	}ImGui::End(); ImGui::PopStyleColor();
+	//ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(20, 20, 100, 1));
+	//ImGui::SetNextWindowBgAlpha(0.8f); // Transparent background
+	//ImGui::SetNextWindowPos(ImVec2((work_pos.x + work_size.x) * 0.5f, work_pos.y + 20.0f), ImGuiCond_Always, ImVec2(0.5f, 0.0f));
+	//if (ImGui::Begin("START", NULL, window_flags)) {
+	//	ImGui::SetWindowFontScale(2.0f);
+	//	if (ImGui::Button("START"))
+	//	{
+	//		if (!algoActive)
+	//		{
+	//			// only set to true if algorithm chosen
+	//			if ( input->algoType != Algorithms::Type::None )
+	//				algoActive = true;
+	//			std::cout << "Started Algorithm" << std::endl;
+	//		}	
+	//	}
+	//}ImGui::End(); ImGui::PopStyleColor();
 
 	// Choose Button //
 	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(20, 20, 100, 1));
@@ -184,15 +202,13 @@ void AlgoVis::OnImGuiRender()
 	ImGui::SetNextWindowPos(ImVec2((work_pos.x)+ 20.0f, work_pos.y +20.0f), ImGuiCond_Always, ImVec2(0.0f, 0.0f));
 	if (ImGui::Begin("CHOOSE", NULL, window_flags)) {
 		ImGui::SetWindowFontScale(1.5f);
+		// If a new algorithm is chosen, reset grid.
 		if (ImGui::Button("BFS"))
 		{
-			if (!algoActive)
-			{
-				input->algoType = Algorithms::Type::BFS;
-				std::cout << "CHOSE BFS" << std::endl;
-			}
-			
+			input->algoType = Algorithms::Type::BFS;
+			std::cout << "CHOSE BFS" << std::endl;
 		}
+		// Reset Grid States
 	}ImGui::End(); ImGui::PopStyleColor();
 
 	// RESET BUTTON //
