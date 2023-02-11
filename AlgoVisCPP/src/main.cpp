@@ -1,7 +1,7 @@
 #include "AlgoVis.h"
 
 
-std::pair <int, int> winDimensions = { 950, 800 };
+std::pair <int, int> winDimensions = { 800, 800 };
 // AlgoVis App //
 class AlgoVisApp : public GLCore::Application
 {

@@ -8,24 +8,6 @@ AlgoVis::AlgoVis()
 {
 	Init();
 }
-
-void AlgoVis::Init()
-{
-	// Init camera controller with the window aspect ratio
-	m_CameraController = std::make_shared<GLCore::Utils::OrthographicCameraController>
-		((float)Application::Get().GetWindow().GetWidth() / (float)Application::Get().GetWindow().GetHeight(), false, 1.0f);
-	// Init Layout
-	layout = std::make_unique<Layout>(Application::Get().GetWindow().GetWidth(), 
-		Application::Get().GetWindow().GetHeight(), m_CameraController);
-	// init Grid
-	grid = std::make_shared<Grid>(layout->getCoordSysHeight(),layout->getCoordSysWidth());
-	setGridColor(0.0f, 0.0f, 0.0f);
-	fillQuad.trans.setScale({ 1.0f,1.0f,0.0f });
-}
-
-AlgoVis::~AlgoVis()
-{
-}
 void AlgoVis::OnAttach()
 {   // AlgoVis's gl prelims 
 	EnableGLDebugging();
@@ -34,116 +16,177 @@ void AlgoVis::OnAttach()
 void AlgoVis::OnDetach()
 {
 }
+// Program Initialization //
+void AlgoVis::Init()
+{
+	// Init camera controller with the window aspect ratio
+	m_CameraController = std::make_shared<GLCore::Utils::OrthographicCameraController>
+		((float)Application::Get().GetWindow().GetWidth() / (float)Application::Get().GetWindow().GetHeight(), false, 1.0f);
+	// Init Layout
+	layout = std::make_unique<Layout>(Application::Get().GetWindow().GetWidth(),
+		Application::Get().GetWindow().GetHeight(), m_CameraController);
+	layout->setCoordSys(20); // Set Height and Width for our coordinate system originating from (0,0)
+	layout->setLimitMultiplier(0.7);
+	// Init Grid //
+	// Height of grid will shorter than max coord system height to make room for UI
+	grid = std::make_shared<Grid>((int)(layout->getCoordSysDim() * layout->getMultiplier()), 
+		layout->getCoordSysDim(), m_CameraController->GetCamera().GetViewProjectionMatrix());
+	grid->setGridColor(0.0f, 0.0f, 0.0f);
+	// Init Algorithms //
+	bfs = std::make_unique<Algorithms::BFS>(grid);
+}
+/* Algorithm Execution */
+void AlgoVis::ExecAlgo()
+{
+	// Choose which algorithm needs executing //
+}
+
 ////////// Event Handling /////////////
 void AlgoVis::OnEvent(Event& event)
 { 
+	EventDispatcher dispatcher(event);
+	// Update Screen Width and Height on Layout //
+	dispatcher.Dispatch<WindowResizeEvent>(
+		[&](WindowResizeEvent& e) { 
+			layout->updateScrDimensions({ Application::Get().GetWindow().GetWidth(), Application::Get().GetWindow().GetHeight() });
+			return true;
+		});
+	dispatcher.Dispatch<MouseMovedEvent>(
+		[&](MouseMovedEvent& e) { // Store Transformed (to coordinate System) Mouse Positions
+			// Transform Screen Coordinates to Grid Coordinates
+			transformMousePos(e.GetX(), e.GetY());
+			return true;
+		});
+	dispatcher.Dispatch<MouseButtonReleasedEvent>(
+		[&](MouseButtonReleasedEvent& e) {
+			if (e.GetMouseButton() == MOUSE_BUTTON_1)
+				progState.mouseBPressed = false;
+			return true; // event handled
+		});
+	// The following evens are only for events WITHIN GRID BOUNDARY //
+	if (isMouseOnGrid())
+	{
+		std::cout << "Mouse On Cell: (" << progState.mouseX << ", " << progState.mouseY << ")" << std::endl;
+		int row = progState.mouseY;
+		int col = progState.mouseX;
+		dispatcher.Dispatch<MouseButtonReleasedEvent>(
+			[&](MouseButtonReleasedEvent& e) {
+				if (e.GetMouseButton() == MOUSE_BUTTON_1) {
+					
+					if (!grid->isStartSet()) { // If grid start point not set yet, Next button release is start point
+						grid->setCellType(row, col, cellType::START);
+						grid->setCellState(row, col, cellState::VISITED);
+					} else if (!grid->isEndSet()) { // If grid end point not set yet, Next button release is end point
+						grid->setCellType(row, col, cellType::END);
+					}
+					if (grid->isStartAndEndSet()){ // run chosen algo only is both start and end cells placed
+						grid->clearPath(); // after mouse button released on grid, clear path for new algo calculation
+						bfs->Execute(grid->getStartCoord()); // run algorithm	
+						progState.isAlgoRunning = true;
+					}
+				}
+				return true; // event handled
+			});
+		dispatcher.Dispatch<MouseButtonPressedEvent>(
+			[&](MouseButtonPressedEvent& e) {
+				progState.mouseBPressed = true; // set to true, so that program recognizes if I am HOLDING DOWN the mouse button as I move.
+				return true;
+			});
+		dispatcher.Dispatch<MouseMovedEvent>(
+			[&](MouseMovedEvent& e) {
+				// while the button is pressed and start and end point already set, place down walls!
+				if (grid->isStartAndEndSet() && progState.mouseBPressed)
+				{
+					grid->setCellType(row, col, cellType::WALL);
+				}
+				return true;
+			});
+	}
 	
 }	
 ////////// Game Loop Layer /////////////
+static int stateIter = 0;
 void AlgoVis::OnUpdate(Timestep ts)
 {
 	// Window Clearing and pause functions 
 	Application::Get().GetWindow().Clear(241.0f /255.0f, 240.0f /255.0f, 255.0f /255.0f, 1.0f);
 	renderer.Clear(true);
-
-	RenderGrid();
+	grid->RenderGridLines();
+	// Execute Algorithm //
+	if (progState.isAlgoRunning) {
+		grid->setGrid(bfs->getGridStates()[stateIter]);
+		grid->RenderGrid();
+		stateIter++;
+		if (stateIter >= bfs->getGridStateSize()) {
+			progState.isAlgoRunning = false;
+			stateIter = 0;
+		}
+	} else{ grid->RenderGrid(); }
+	
 }
 
-//////////// UI IMGUI Render Layer ////////////
+/*  UI IMGUI Render Layer  */ 
 void AlgoVis::OnImGuiRender()
 {
+	const ImGuiViewport* viewport;
+	ImVec2 work_pos;
+	ImVec2 work_size;
+	viewport = ImGui::GetMainViewport();
+	work_pos = viewport->Pos;
+	work_size = viewport->Size;
+	ImGuiStyle* style = &ImGui::GetStyle();
+	style->Colors[ImGuiCol_Text] = ImVec4(0.0f, 0.0f, 0.0f, 1.00f);
 
-}
-
-
-/* RENDERING */
-void AlgoVis::RenderGrid()
-{
-	// Draw Grid Lines //
-	gridRender.getShader()->use();
-	gridRender.getShader()->SetUniformMatrix4fv("viewProjection", m_CameraController->GetCamera().GetViewProjectionMatrix());
-	Transform transV;
-	transV.setScale({ 0.0f, (float)grid->getHeight(), 1.0f});
-	// vertical lines
-	for (uint32_t x = 0; x <= grid->getWidth(); x++) {
-		transV.setPosition({ (float)x, 0.0f, 0.0f });
-		renderer.DrawLineStrip(*(gridRender.getVA()), *(gridRender.getShader()), transV, gridRender.vertexCount());
-	}
-	Transform transH;
-	transH.setScale({ (float)grid->getWidth(), 0.0f, 1.0f });
-	// horizontal lines
-	for (uint32_t y = 0; y <= grid->getHeight(); y++) {
-		transH.setPosition({ 0.0f, (float)y, 0.0f });
-		renderer.DrawLineStrip(*(gridRender.getVA()), *(gridRender.getShader()), transH, gridRender.vertexCount());
-	}
-
-	fillQuad.quad_shader->use();
-	fillQuad.quad_shader->SetUniformMatrix4fv("viewProjection", m_CameraController->GetCamera().GetViewProjectionMatrix());
-	// Only Execute code below if both start and Endpoint has been set and algorithm chosen
-	for (uint32_t i = 0; i < grid->getWidth(); i++) {
-		for (uint32_t j = 0; j < grid->getHeight(); j++) {
-			// Check if start and end, if so, render colored cell
-			if (grid->getCellType(i, j) == cellType::START) {
-				fillQuad.setColor(0.0f, 1.0f, 0.0f, 1.0f);
-				fillQuad.trans.setPosition({ (float)j, (float)i, 0.0f });
-				renderer.DrawRect(fillQuad.va, *(fillQuad.ib), *(fillQuad.quad_shader), fillQuad.trans);
-			}
-			else if (grid->getCellType(i, j) == cellType::END) {
-				fillQuad.setColor(1.0f, 0.0f, 0.0f, 1.0f);
-				fillQuad.trans.setPosition({ (float)j, (float)i, 0.0f });
-				renderer.DrawRect(fillQuad.va, *(fillQuad.ib), *(fillQuad.quad_shader), fillQuad.trans);
-			}
-			else if (grid->getCellType(i, j) == cellType::WALL) {
-				fillQuad.setColor(0.0f, 0.0f, 0.0f, 1.0f);
-				fillQuad.trans.setPosition({ (float)j, (float)i, 0.0f });
-				renderer.DrawRect(fillQuad.va, *(fillQuad.ib), *(fillQuad.quad_shader), fillQuad.trans);
-			}
-			else if (grid->getCellType(i, j) == cellType::PATH) {
-				fillQuad.setColor(1.0f, 1.0f, 0.0f, 1.0f);
-				fillQuad.trans.setPosition({ (float)j, (float)i, 0.0f });
-				renderer.DrawRect(fillQuad.va, *(fillQuad.ib), *(fillQuad.quad_shader), fillQuad.trans);
-			}
-			else {
-				switch ( grid->getCellState(i, j) )
-				{
-				case cellState::VISITED:
-					fillQuad.setColor(0.3f, 0.3f, 1.0f, 0.8f);
-					fillQuad.trans.setPosition({ (float)j, (float)i, 0.0f });
-					renderer.DrawRect(fillQuad.va, *(fillQuad.ib), *(fillQuad.quad_shader), fillQuad.trans);
-					break;
-				case cellState::VISITING:
-					fillQuad.setColor(0.0f, 1.0f, 0.0f, 1.0f);
-					fillQuad.trans.setPosition({ (float)j, (float)i, 0.0f });
-					renderer.DrawRect(fillQuad.va, *(fillQuad.ib), *(fillQuad.quad_shader), fillQuad.trans);
-					break;
-				case cellState::UNVISITED: // if unvisited, no need to render a quad.
-				default:
-					break;
-				}
-			}
-
+	static ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration |
+		ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings
+		| ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
+	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(20, 20, 100, 1));
+	ImGui::SetNextWindowBgAlpha(0.8f); // Transparent background
+	ImGui::SetNextWindowPos(ImVec2((work_pos.x + work_size.x) - 200.0f, work_pos.y + 20.0f), ImGuiCond_Always, ImVec2(1.0f, 0.0f));
+	if (ImGui::Begin("RESET", NULL, window_flags)) {
+		ImGui::SetWindowFontScale(1.5f);
+		if (ImGui::Button("RESET"))
+		{	// Reset App
+			VisReset();
 		}
-	}
+	}ImGui::End(); ImGui::PopStyleColor();
 }
-void AlgoVis::setGridColor(float r, float g, float b, float a)
-{
-	gridRender.getShader()->use();
-	gridRender.getShader()->SetUniformVec4fv("u_Color", glm::vec4(r, g, b, a));
-}
-void AlgoVis::setGridColor(glm::vec3 rgb)
-{
-	gridRender.getShader()->use();
-	gridRender.getShader()->SetUniformVec4fv("u_Color", glm::vec4(rgb, 1.0f));
-}
+/* HELPER FUNCTIONS */
 
-/////// HELPER FUNCTIONS ///////
 void AlgoVis::VisReset()
 {
 	// Clear Board and Paths
+	grid->reset();
 	// Reset Inputs
 	// Reset Program States
 	std::cout << "Reset Application" << std::endl;
 }
+
+bool AlgoVis::isMouseOnGrid()
+{
+	if (progState.mouseX < 0 || progState.mouseY < 0 ||
+		progState.mouseX >= grid->getWidth() || progState.mouseY >= grid->getHeight())
+	{
+		return false;
+	}
+	return true;
+}
+
+void AlgoVis::transformMousePos(float const scrMouseX, float const scrMouseY)
+{
+	// X & Y need to correspond to coordinate system space and not screen space
+	// Transform the mouse positions from screen space into our Coordinate system
+	progState.mouseX = ((layout->getCoordSysDim()) *
+		(scrMouseX / layout->getScrWidth()));
+	progState.mouseY = ((layout->getCoordSysDim()) -
+		((layout->getCoordSysDim()) * (scrMouseY / layout->getScrHeight())));
+	std::cout << "Transformed Mouse Coords of (" << progState.mouseX << ", " << progState.mouseY << ")" << std::endl;
+}
+
+
+
+
+
 
 
 

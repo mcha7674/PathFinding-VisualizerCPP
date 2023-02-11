@@ -8,48 +8,43 @@ using GLCore::Utils::OrthographicCameraController;
 /* Program Layout Class */
 class Layout {
 public:
-	Layout(uint32_t screenWidth, uint32_t screenHeight, 
+	Layout(int screenWidth, int screenHeight, 
 		std::shared_ptr<OrthographicCameraController> CamControl,
-		pair <uint32_t, uint32_t>CoordSys = { 20, 20 })
+		int CoordSys = 20)
 	{
 		coordSys = CoordSys;
-		gridBounds = CoordSys;
 		screenDimensions = { screenWidth, screenHeight };
 		camControl = CamControl;
+		GridHeight_LimitMultiplier = 1.0f;
 		// Set Initial Orthographic Projection
-		camControl->GetCamera().SetProjection(0, coordSys.first, coordSys.second, 0);
+		camControl->GetCamera().SetProjection(0.0f, (float)coordSys, 0.0f, (float)coordSys);
 	}
 	~Layout() = default;
 	// Getters
 	inline int32_t getScrHeight() { return screenDimensions.second; }
 	inline int32_t getScrWidth() { return screenDimensions.first; }
-	inline int32_t getCoordSysHeight() { return coordSys.second; }
-	inline int32_t getCoordSysWidth() { return coordSys.first; }
+	inline int32_t getCoordSysDim() { return coordSys; }
+	inline float getMultiplier() { return GridHeight_LimitMultiplier; }
 	// Coordinate System Setters
-	void setCoordSysHeight(int32_t h) { 
-		coordSys.second = h; 
-		camControl->GetCamera().SetProjection(0, coordSys.first, coordSys.second, 0);
+	void setCoordSys(int newCS) {
+		coordSys = newCS;
+		camControl->GetCamera().SetProjection(0.0f, (float)coordSys, 0.0f, (float)coordSys);
 	}
-	void setCoordSysWidth(int32_t w) { 
-		coordSys.first = w; 
-		camControl->GetCamera().SetProjection(0, coordSys.first, coordSys.second, 0);
+	void updateScrDimensions(pair<int, int>dim) {
+		screenDimensions = dim; std::cout << "Updating Screen Dimensions" << std::endl;
 	}
-	void setCoordSys(pair <uint32_t, uint32_t> newCS) { 
-		coordSys = newCS; 
-		camControl->GetCamera().SetProjection(0.0f, (float)coordSys.first, 0.0f, (float)coordSys.second);
-	}
-	void expandCoordSys(float padding) {
-		camControl->GetCamera().SetProjection(0.0f - padding, (float)coordSys.first + padding, 
-			0.0f - padding, (float)coordSys.second + padding);
+	void setLimitMultiplier(float percentScr)
+	{
+		GridHeight_LimitMultiplier = percentScr;
 	}
 	
 private:
-	// Screen Coordinate System
-	pair < uint32_t, uint32_t > coordSys;
-	// Grid Boundaries
-	pair < uint32_t, uint32_t > gridBounds;
+	// Screen Coordinate System - max X and H
+	int coordSys;
 	// Screen Height and Width
-	pair < uint32_t, uint32_t > screenDimensions;
+	pair < int, int > screenDimensions;
+	// how much of the screen the grid should take up height-wise //
+	float GridHeight_LimitMultiplier;
 	// Pointer to the orthographic camera controller
 	std::shared_ptr<OrthographicCameraController> camControl;
 };

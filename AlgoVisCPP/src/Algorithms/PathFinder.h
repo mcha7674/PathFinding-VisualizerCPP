@@ -1,5 +1,6 @@
 #pragma once
 #include "../Grid/Grid.h"
+#include "../Grid/GridRender.h"
 #include <queue>
 #include <chrono>
 #include <thread>
@@ -14,26 +15,28 @@ namespace Algorithms
 	enum class Type
 	{
 		None = 0,
-		BFS, DFS,
-		QuickSort, MergeSort,
-		PostTraversal, PreTraversal
+		BFS, DFS, Dijkstra,
+		AStar
 	};
 
 	class PathFinder 
 	{
 	public:
-		/*PathFinder(std::shared_ptr<Grid> grid) 
-			:m_Grid(grid)
+		virtual ~PathFinder() = default;
+		virtual void Execute(std::pair<int, int> start) = 0;
+		virtual void Reset() = 0;
+		virtual std::vector<std::vector<std::vector<Cell>>> getGridStates()
 		{
-		}*/
-		PathFinder();
-		bool bfs(std::pair<int,int>startCoords, std::shared_ptr<Grid> m_Grid);
-		void reset();
-	private:
-		// Queue for bfs Algorithms
-		std::queue <Cell> q;
+			return gridStates;
+		}
+		virtual int getGridStateSize()
+		{
+			return (int)gridStates.size();
+		}
+	protected:
+		std::vector<std::vector<std::vector<Cell>>> gridStates;
 		// directional arrays (delta row and col)
-		int dr[4] = { 0, 1, 0, -1 };
-		int dc[4] = { 1, 0, -1, 0 };
+		static constexpr const int dr[4] = { 0, 1, 0, -1 };
+		static constexpr const int dc[4] = { 1, 0, -1, 0 };
 	};
 }

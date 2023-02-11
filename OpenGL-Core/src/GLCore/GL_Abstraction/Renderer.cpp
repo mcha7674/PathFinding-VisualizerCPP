@@ -64,7 +64,7 @@ void Renderer::DrawPoints(const VertexArray& va, Shader& shader, Transform& tran
     va.Bind();
     CALCULATE_MODEL_MATRIX();
     setUniforms(m_model, shader);
-    glPointSize(2);
+    glPointSize(1.0f);
     GLCall(glDrawArrays(GL_POINTS, 0, count));
 }
 
@@ -74,7 +74,7 @@ void Renderer::DrawLineStrip(const VertexArray& va, Shader& shader, Transform& t
     va.Bind();
     CALCULATE_MODEL_MATRIX();
     setUniforms(m_model, shader);
-    //glLineWidth(5);
+    glLineWidth(1.0f);
     GLCall(glDrawArrays(GL_LINE_STRIP, 0, count));
 }
 

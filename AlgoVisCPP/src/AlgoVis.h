@@ -3,18 +3,17 @@
 #include <GLCoreUtils.h> 
 #include <GLAbstraction.h> 
 #include <GLCore.h>
-#include "Base_Models/Quad.h"
 #include "Grid/Grid.h"
-#include "Grid/GridRender.h"
 #include "Algorithms/Algorithms.h"
 #include "UI/UserInput.h"
 #include "Layout.h"
+#include "Algorithms/Algorithms.h"
 
 class AlgoVis : public GLCore::Layer
 {
 public:
 	AlgoVis();
-	virtual ~AlgoVis();
+	virtual ~AlgoVis() = default;
 	// Layer Functions
 	virtual void OnAttach() override;
 	virtual void OnDetach() override;
@@ -28,14 +27,18 @@ public:
 	void VisReset();
 	// Render Grid
 	void RenderGrid();
-	// Set Grid Color
-	void AlgoVis::setGridColor(float r, float g, float b, float a = 1.0f);
-	void AlgoVis::setGridColor(glm::vec3 color);
+	// Algorithm Execution
+	void ExecAlgo();
+	// Helper Functions
+	bool isMouseOnGrid();
+	void transformMousePos(float const scrMouseX, float const scrMouseY);
 private:
 	struct ProgStates {
 		// store mouse position state
-		uint32_t mouseX;
-		uint32_t mouseY;
+		int mouseX;
+		int mouseY;
+		// Mouse is Held Down
+		bool mouseBPressed;
 		// grid alteration in progress state 
 		bool isGridChanging;
 		// algorithm finished state
@@ -44,20 +47,18 @@ private:
 		bool isAlgoRunning;
 		ProgStates() {
 			mouseX = mouseY = 0;
-			isGridChanging = isAlgoFinished = isAlgoRunning = false;
+			mouseBPressed = isGridChanging = isAlgoFinished = isAlgoRunning = false;
 		}
 	};
-	ProgStates progStates;
+	ProgStates progState;
 	// Layout //
 	std::unique_ptr<Layout> layout;
 	// The Grid //
 	std::shared_ptr<Grid> grid;
-	Quad fillQuad; 	
 	// Algorithms //
-	// 
+	std::unique_ptr<Algorithms::PathFinder> bfs;
 	////////// Rendering //////////
 	Renderer renderer;
-	GridRender gridRender;
 	//////////  UI //////////
 	//UserInput input; // user input
 	////////// AlgoVis Camera //////////
