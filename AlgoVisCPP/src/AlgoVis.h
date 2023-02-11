@@ -3,12 +3,12 @@
 #include <GLCoreUtils.h> 
 #include <GLAbstraction.h> 
 #include <GLCore.h>
-#include "Grid.h"
+#include "Base_Models/Quad.h"
+#include "Grid/Grid.h"
+#include "Grid/GridRender.h"
 #include "Algorithms/Algorithms.h"
-#include "Algorithms/PathFinder.h"
-
-
-
+#include "UI/UserInput.h"
+#include "Layout.h"
 
 class AlgoVis : public GLCore::Layer
 {
@@ -22,37 +22,49 @@ public:
 	virtual void OnUpdate(GLCore::Timestep ts) override;
 	virtual void OnImGuiRender() override;
 
-	// Reset inputs function
+	// Init the algorithm visualizer
+	void Init();
+	// Reset Program to Initial state
 	void VisReset();
-	bool isMouseOnGrid();
-
+	// Render Grid
+	void RenderGrid();
+	// Set Grid Color
+	void AlgoVis::setGridColor(float r, float g, float b, float a = 1.0f);
+	void AlgoVis::setGridColor(glm::vec3 color);
 private:
-	// The Grid //
-	std::shared_ptr<Grid> grid;
-	std::vector<float> coordSys; // How far into x and y the coordinate system goes
-	// Algorithms //
-	struct UserInput
-	{
-		bool AlgorithmStart;
-		Algorithms::Type algoType;
-		UserInput() { reset(); }
-		void reset() 
-		{
-			AlgorithmStart = false;
-			algoType = Algorithms::Type::None;
+	struct ProgStates {
+		// store mouse position state
+		uint32_t mouseX;
+		uint32_t mouseY;
+		// grid alteration in progress state 
+		bool isGridChanging;
+		// algorithm finished state
+		bool isAlgoFinished;
+		// algorithm currently executing state.
+		bool isAlgoRunning;
+		ProgStates() {
+			mouseX = mouseY = 0;
+			isGridChanging = isAlgoFinished = isAlgoRunning = false;
 		}
 	};
+	ProgStates progStates;
+	// Layout //
+	std::unique_ptr<Layout> layout;
+	// The Grid //
+	std::shared_ptr<Grid> grid;
+	Quad fillQuad; 	
 	// Algorithms //
-	std::unique_ptr<Algorithms::PathFinder> pathFindingAlgorithms;
-	////////// AlgoVis Rendering //////////
+	// 
+	////////// Rendering //////////
 	Renderer renderer;
+	GridRender gridRender;
 	//////////  UI //////////
-	std::unique_ptr<UserInput> input; // user input
+	//UserInput input; // user input
 	////////// AlgoVis Camera //////////
-	GLCore::Utils::OrthographicCameraController m_CameraController;
-	float screenPadding; // amount of padding between the grid borders and the edge of the screen.
-	
+	std::shared_ptr<GLCore::Utils::OrthographicCameraController> m_CameraController;	
 };
+
+
 
 
 
