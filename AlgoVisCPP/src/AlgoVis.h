@@ -25,10 +25,8 @@ public:
 	void Init();
 	// Reset Program to Initial state
 	void VisReset();
-	// Render Grid
-	void RenderGrid();
-	// Algorithm Execution
-	void ExecAlgo();
+	// Algorithm Re-Initializations
+	void InitAlgos();
 	// Helper Functions
 	bool isMouseOnGrid();
 	void transformMousePos(float const scrMouseX, float const scrMouseY);
@@ -40,14 +38,11 @@ private:
 		// Mouse is Held Down
 		bool mouseBPressed;
 		// grid alteration in progress state 
-		bool isGridChanging;
-		// algorithm finished state
-		bool isAlgoFinished;
 		// algorithm currently executing state.
 		bool isAlgoRunning;
 		ProgStates() {
-			mouseX = mouseY = 0;
-			mouseBPressed = isGridChanging = isAlgoFinished = isAlgoRunning = false;
+			 mouseX = mouseY = 0;
+			 mouseBPressed  = isAlgoRunning = false;
 		}
 	};
 	ProgStates progState;

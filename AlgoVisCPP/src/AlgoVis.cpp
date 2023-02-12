@@ -3,6 +3,8 @@
 using namespace GLCore;
 using namespace GLCore::Utils;
 
+bool autoCalcToggle = false;
+
 AlgoVis::AlgoVis()
 	:Layer("C++ Algorithm Visualizer")  
 {
@@ -26,7 +28,7 @@ void AlgoVis::Init()
 	layout = std::make_unique<Layout>(Application::Get().GetWindow().GetWidth(),
 		Application::Get().GetWindow().GetHeight(), m_CameraController);
 	layout->setCoordSys(20); // Set Height and Width for our coordinate system originating from (0,0)
-	layout->setLimitMultiplier(0.7);
+	layout->setLimitMultiplier(0.8);
 	// Init Grid //
 	// Height of grid will shorter than max coord system height to make room for UI
 	grid = std::make_shared<Grid>((int)(layout->getCoordSysDim() * layout->getMultiplier()), 
@@ -36,7 +38,7 @@ void AlgoVis::Init()
 	bfs = std::make_unique<Algorithms::BFS>(grid);
 }
 /* Algorithm Execution */
-void AlgoVis::ExecAlgo()
+void AlgoVis::InitAlgos()
 {
 	// Choose which algorithm needs executing //
 }
@@ -64,7 +66,7 @@ void AlgoVis::OnEvent(Event& event)
 			return true; // event handled
 		});
 	// The following evens are only for events WITHIN GRID BOUNDARY //
-	if (isMouseOnGrid())
+	if (isMouseOnGrid() && !progState.isAlgoRunning)
 	{
 		std::cout << "Mouse On Cell: (" << progState.mouseX << ", " << progState.mouseY << ")" << std::endl;
 		int row = progState.mouseY;
@@ -80,16 +82,20 @@ void AlgoVis::OnEvent(Event& event)
 						grid->setCellType(row, col, cellType::END);
 					}
 					if (grid->isStartAndEndSet()){ // run chosen algo only is both start and end cells placed
+						// Init the correct algorithm for updating
 						grid->clearPath(); // after mouse button released on grid, clear path for new algo calculation
-						bfs->Execute(grid->getStartCoord()); // run algorithm	
-						progState.isAlgoRunning = true;
+						bfs->Init(grid->getStartCoord()); // run algorithm	
+						//progState.isAlgoRunning = true;
 					}
 				}
 				return true; // event handled
 			});
 		dispatcher.Dispatch<MouseButtonPressedEvent>(
 			[&](MouseButtonPressedEvent& e) {
-				progState.mouseBPressed = true; // set to true, so that program recognizes if I am HOLDING DOWN the mouse button as I move.
+				if (e.GetMouseButton() == MOUSE_BUTTON_1) {
+					// set to true, so that program recognizes if I am HOLDING DOWN the mouse button as I move.
+					progState.mouseBPressed = true; 
+				}
 				return true;
 			});
 		dispatcher.Dispatch<MouseMovedEvent>(
@@ -105,24 +111,18 @@ void AlgoVis::OnEvent(Event& event)
 	
 }	
 ////////// Game Loop Layer /////////////
-static int stateIter = 0;
 void AlgoVis::OnUpdate(Timestep ts)
 {
 	// Window Clearing and pause functions 
 	Application::Get().GetWindow().Clear(241.0f /255.0f, 240.0f /255.0f, 255.0f /255.0f, 1.0f);
 	renderer.Clear(true);
 	grid->RenderGridLines();
-	// Execute Algorithm //
+	// Animate Algorithm if executed//
 	if (progState.isAlgoRunning) {
-		grid->setGrid(bfs->getGridStates()[stateIter]);
-		grid->RenderGrid();
-		stateIter++;
-		if (stateIter >= bfs->getGridStateSize()) {
-			progState.isAlgoRunning = false;
-			stateIter = 0;
-		}
-	} else{ grid->RenderGrid(); }
-	
+		progState.isAlgoRunning = bfs->Update();
+	} 
+	grid->RenderGrid(); 
+
 }
 
 /*  UI IMGUI Render Layer  */ 
@@ -136,20 +136,45 @@ void AlgoVis::OnImGuiRender()
 	work_size = viewport->Size;
 	ImGuiStyle* style = &ImGui::GetStyle();
 	style->Colors[ImGuiCol_Text] = ImVec4(0.0f, 0.0f, 0.0f, 1.00f);
-
 	static ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration |
 		ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings
 		| ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
+	// Start Button //
+	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(20, 20, 100, 1));
+	ImGui::SetNextWindowBgAlpha(0.8f); // Transparent background
+	ImGui::SetNextWindowPos(ImVec2((work_pos.x + work_size.x) * 0.5f, work_pos.y + 20.0f), ImGuiCond_Always, ImVec2(0.5f, 0.0f));
+	if (ImGui::Begin("START", NULL, window_flags)) {
+		ImGui::SetWindowFontScale(2.0f);
+		if (ImGui::Button("START"))
+		{
+			if (!progState.isAlgoRunning && grid->isStartAndEndSet())
+			{
+				// only set to true if algorithm chosen
+				progState.isAlgoRunning = true;
+				std::cout << "Started Algorithm" << std::endl;
+			}	
+		}
+	}ImGui::End(); ImGui::PopStyleColor();
 	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(20, 20, 100, 1));
 	ImGui::SetNextWindowBgAlpha(0.8f); // Transparent background
 	ImGui::SetNextWindowPos(ImVec2((work_pos.x + work_size.x) - 200.0f, work_pos.y + 20.0f), ImGuiCond_Always, ImVec2(1.0f, 0.0f));
 	if (ImGui::Begin("RESET", NULL, window_flags)) {
 		ImGui::SetWindowFontScale(1.5f);
-		if (ImGui::Button("RESET"))
+		if (ImGui::Button("RESET") && !progState.isAlgoRunning)
 		{	// Reset App
 			VisReset();
 		}
 	}ImGui::End(); ImGui::PopStyleColor();
+
+	//static ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
+	//ImGui::SetNextWindowBgAlpha(0.0f); // Transparent background
+	//ImGui::SetNextWindowPos(ImVec2(work_pos.x + work_size.x * 0.5f, work_pos.y + 25.0f), ImGuiCond_Always, ImVec2(0.5f, 0.0f));
+	//ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(20, 20, 100, 1));
+	//if (ImGui::Begin("##AC", NULL, window_flags))
+	//{
+	//	ImGui::SetWindowFontScale(1.2f);  
+	//	ImGui::RadioButton("Auto-Calc", &autoCalcToggle);
+	//} ImGui::End(); ImGui::PopStyleColor();
 }
 /* HELPER FUNCTIONS */
 

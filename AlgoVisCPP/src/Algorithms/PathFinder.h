@@ -23,20 +23,19 @@ namespace Algorithms
 	{
 	public:
 		virtual ~PathFinder() = default;
-		virtual void Execute(std::pair<int, int> start) = 0;
+		//virtual void Execute(std::pair<int, int> start) = 0;
+		virtual void Init(std::pair<int, int> start) = 0;
+		virtual bool Update() = 0;
 		virtual void Reset() = 0;
-		virtual std::vector<std::vector<std::vector<Cell>>> getGridStates()
-		{
-			return gridStates;
-		}
-		virtual int getGridStateSize()
-		{
-			return (int)gridStates.size();
-		}
+		virtual bool PathUpdate(std::pair<int, int> &endCoord) = 0;
+		virtual void InitPath(int rEnd, int cEnd) = 0;
 	protected:
-		std::vector<std::vector<std::vector<Cell>>> gridStates;
+		std::pair<int, int> m_Start;
+		bool endFound;
 		// directional arrays (delta row and col)
 		static constexpr const int dr[4] = { 0, 1, 0, -1 };
 		static constexpr const int dc[4] = { 1, 0, -1, 0 };
+		/*static constexpr const int dr[8] = { 1, 1, 0, -1, -1, -1, 0, 1 };
+		static constexpr const int dc[8] = { 0, 1, 1, 1, 0, -1, -1, -1 };*/
 	};
 }

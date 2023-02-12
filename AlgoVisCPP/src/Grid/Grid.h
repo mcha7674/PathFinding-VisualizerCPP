@@ -9,6 +9,7 @@
 
 enum class cellState { VISITED = 0, UNVISITED, VISITING };
 enum class cellType { NORMAL = 0, START, END, WALL, PATH };
+ // color static vectors:
 
 // Grid Cell Properties //
 struct Cell
@@ -21,8 +22,7 @@ struct Cell
 		m_Type = cellType::NORMAL;
 		parentCell = coords;
 	}
-	std::pair<int, int> coords;
-	std::pair<int, int> parentCell; // Keep track of cell visited by for shortest path
+	int ID;
 	int weight;
 	cellType m_Type;
 	cellState m_State;
@@ -57,12 +57,16 @@ public:
 	void reset();
 	// Getters
 	inline Cell getCell(int r, int c) { return grid[r][c]; }
+	inline Cell getCell(std::pair<int,int> coord) { return grid[coord.first][coord.second]; }
 	inline cellState getCellState(int r, int c) { return grid[r][c].m_State; }
 	inline cellType getCellType(int r, int c) { return grid[r][c].m_Type; }
-	inline std::pair<int, int> getCellParent(int r, int c) { return grid[r][c].parentCell; }
+	inline cellType getCellType(std::pair<int, int> coord) { return grid[coord.first][coord.second].m_Type; }
+	inline int getCellID(int r, int c) { return grid[r][c].ID; }
+	inline std::pair<int, int> getCellCoord(int ID) { return cellHash[ID]; }
 	inline int getHeight() { return gridProps->height; }
 	inline int getWidth() { return gridProps->width; }
 	inline std::pair<int, int> getStartCoord() { return gridProps->startCoord; }
+	inline std::pair<int, int> getEndCoord() { return gridProps->endCoord; }
 	std::vector<std::vector<Cell>> getGrid() { return grid; }	
 	// Setters
 	void setCellState(int row, int col, cellState state);
@@ -81,6 +85,7 @@ public:
 private:
 	std::shared_ptr<GridProps> gridProps;
 	std::vector<std::vector<Cell>> grid;
+	std::unordered_map <int, std::pair<int, int> > cellHash;
 	// Rendering
 	GridRender gridRender;
 	Renderer renderer;

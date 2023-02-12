@@ -127,6 +127,7 @@ void Grid::setCellType(int row, int col, cellType type)
 		break;
 	case cellType::PATH:
 		grid[row][col].m_Type = type;
+		std::cout << "Setting Cell " << row << "," << col << " To a PATH cell" << std::endl;
 		break;
 	case cellType::NORMAL:
 		grid[row][col].m_Type = type;
