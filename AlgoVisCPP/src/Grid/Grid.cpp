@@ -8,10 +8,12 @@ Grid::Grid(int row, int col, glm::mat4 ViewProjMatrix)
 	gridProps->width = col;
 	grid = std::vector<std::vector<Cell>>(row, std::vector<Cell>(col, Cell()));
 	// Fill Coordinates
+	int ID = 0;
 	for (int i = 0; i < row; i++) {
 		for (int j = 0; j < col; j++) {
-			grid[i][j].coords = { i, j };
-			grid[i][j].parentCell = { i, j };
+			grid[i][j].ID = ID;
+			cellHash[ID] = { i, j };
+			ID++;
 		}
 	}
 	
@@ -54,7 +56,7 @@ void Grid::RenderGrid()
 					renderer.DrawRect(fillQuad.va, *(fillQuad.ib), *(fillQuad.quad_shader), fillQuad.trans);
 					break;
 				case cellState::VISITING:
-					fillQuad.setColor(0.0f, 1.0f, 0.0f, 1.0f);
+					fillQuad.setColor(0.0f, 1.0f, 1.0f, 1.0f);
 					fillQuad.trans.setPosition({ (float)j, (float)i, 0.0f });
 					renderer.DrawRect(fillQuad.va, *(fillQuad.ib), *(fillQuad.quad_shader), fillQuad.trans);
 					break;
@@ -137,10 +139,6 @@ void Grid::setCellType(int row, int col, cellType type)
 	}
 }
 
-void Grid::setCellParent(int r0, int c0, int r, int c)
-{
-	grid[r][c].parentCell = { r0, c0 };
-}
 
 void Grid::clearBoard()
 {
@@ -162,7 +160,6 @@ void Grid::clearPath()
 				setCellType(i, j, cellType::NORMAL); 
 			}
 			setCellState(i, j, cellState::UNVISITED);
-			setCellParent(i, j, i, j); // reset cell parents to themselves.
 		}
 	}
 }

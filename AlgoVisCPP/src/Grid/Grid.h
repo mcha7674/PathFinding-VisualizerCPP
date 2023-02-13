@@ -20,7 +20,6 @@ struct Cell
 		weight = 0;
 		m_State = cellState::UNVISITED;
 		m_Type = cellType::NORMAL;
-		parentCell = coords;
 	}
 	int ID;
 	int weight;
@@ -58,9 +57,11 @@ public:
 	// Getters
 	inline Cell getCell(int r, int c) { return grid[r][c]; }
 	inline Cell getCell(std::pair<int,int> coord) { return grid[coord.first][coord.second]; }
-	inline cellState getCellState(int r, int c) { return grid[r][c].m_State; }
+	inline cellType getCellType(int cellID) { return grid[cellHash[cellID].first][cellHash[cellID].second].m_Type; }
 	inline cellType getCellType(int r, int c) { return grid[r][c].m_Type; }
 	inline cellType getCellType(std::pair<int, int> coord) { return grid[coord.first][coord.second].m_Type; }
+	inline cellState getCellState(int r, int c) { return grid[r][c].m_State; }
+
 	inline int getCellID(int r, int c) { return grid[r][c].ID; }
 	inline std::pair<int, int> getCellCoord(int ID) { return cellHash[ID]; }
 	inline int getHeight() { return gridProps->height; }
@@ -71,7 +72,6 @@ public:
 	// Setters
 	void setCellState(int row, int col, cellState state);
 	void setCellType(int row, int col, cellType type);
-	void setCellParent(int r0, int c0, int r, int c);
 	inline void setGrid(std::vector<std::vector<Cell>> GRID) { grid = GRID; };
 	// States //
 	bool isStartSet() { return (gridProps->startPointSet); }
