@@ -28,7 +28,7 @@ void AlgoVis::Init()
 	layout = std::make_unique<Layout>(Application::Get().GetWindow().GetWidth(),
 		Application::Get().GetWindow().GetHeight(), m_CameraController);
 	layout->setCoordSys(20); // Set Height and Width for our coordinate system originating from (0,0)
-	layout->setLimitMultiplier(0.8);
+	layout->setLimitMultiplier(0.7);
 	// Init Grid //
 	// Height of grid will shorter than max coord system height to make room for UI
 	grid = std::make_shared<Grid>((int)(layout->getCoordSysDim() * layout->getMultiplier()), 
@@ -36,13 +36,9 @@ void AlgoVis::Init()
 	grid->setGridColor(0.0f, 0.0f, 0.0f);
 	// Init Algorithms //
 	bfs = std::make_unique<Algorithms::BFS>(grid);
+	// Init UI //
+	ui = std::make_unique<UI>(m_CameraController);
 }
-/* Algorithm Execution */
-void AlgoVis::InitAlgos()
-{
-	// Choose which algorithm needs executing //
-}
-
 ////////// Event Handling /////////////
 void AlgoVis::OnEvent(Event& event)
 { 
@@ -65,7 +61,7 @@ void AlgoVis::OnEvent(Event& event)
 				progState.mouseBPressed = false;
 			return true; // event handled
 		});
-	// The following evens are only for events WITHIN GRID BOUNDARY //
+	// The following events are only for events WITHIN GRID BOUNDARY //
 	if (isMouseOnGrid() && !progState.isAlgoRunning)
 	{
 		std::cout << "Mouse On Cell: (" << progState.mouseX << ", " << progState.mouseY << ")" << std::endl;
@@ -81,6 +77,7 @@ void AlgoVis::OnEvent(Event& event)
 					} else if (!grid->isEndSet()) { // If grid end point not set yet, Next button release is end point
 						grid->setCellType(row, col, cellType::END);
 					}
+					// If Start amd end nodes are ready, clear path and re initialize. WIll restart algo if placing walls down as well
 					if (grid->isStartAndEndSet()){ // run chosen algo only is both start and end cells placed
 						// Init the correct algorithm for updating
 						grid->clearPath(); // after mouse button released on grid, clear path for new algo calculation
@@ -95,14 +92,18 @@ void AlgoVis::OnEvent(Event& event)
 				if (e.GetMouseButton() == MOUSE_BUTTON_1) {
 					// set to true, so that program recognizes if I am HOLDING DOWN the mouse button as I move.
 					progState.mouseBPressed = true; 
+					if (grid->isStartAndEndSet() && progState.mouseBPressed) {
+						if (grid->getCellType(row, col) != cellType::WALL)
+							grid->setCellType(row, col, cellType::WALL);
+						else grid->setCellType(row, col, cellType::NORMAL);
+					}
 				}
 				return true;
 			});
 		dispatcher.Dispatch<MouseMovedEvent>(
 			[&](MouseMovedEvent& e) {
 				// while the button is pressed and start and end point already set, place down walls!
-				if (grid->isStartAndEndSet() && progState.mouseBPressed)
-				{
+				if (grid->isStartAndEndSet() && progState.mouseBPressed) {
 					grid->setCellType(row, col, cellType::WALL);
 				}
 				return true;
@@ -119,65 +120,35 @@ void AlgoVis::OnUpdate(Timestep ts)
 	grid->RenderGridLines();
 	// Animate Algorithm if executed//
 	if (progState.isAlgoRunning) {
+		progState.status = "Currently Executing Algorithm";
 		progState.isAlgoRunning = bfs->Update();
-	} 
+		if (!progState.isAlgoRunning) {
+			progState.status = "Execution Complete";
+			if (bfs->getEndState()) progState.status += "(End Found)";
+			else progState.status += "(End Not Found)";
+		}
+	}
 	grid->RenderGrid(); 
-
 }
 
-/*  UI IMGUI Render Layer  */ 
+/*  UI IMGUI Render Layer  */
 void AlgoVis::OnImGuiRender()
 {
-	const ImGuiViewport* viewport;
-	ImVec2 work_pos;
-	ImVec2 work_size;
-	viewport = ImGui::GetMainViewport();
-	work_pos = viewport->Pos;
-	work_size = viewport->Size;
-	ImGuiStyle* style = &ImGui::GetStyle();
-	style->Colors[ImGuiCol_Text] = ImVec4(0.0f, 0.0f, 0.0f, 1.00f);
-	static ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration |
-		ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings
-		| ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
-	// Start Button //
-	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(20, 20, 100, 1));
-	ImGui::SetNextWindowBgAlpha(0.8f); // Transparent background
-	ImGui::SetNextWindowPos(ImVec2((work_pos.x + work_size.x) * 0.5f, work_pos.y + 20.0f), ImGuiCond_Always, ImVec2(0.5f, 0.0f));
-	if (ImGui::Begin("START", NULL, window_flags)) {
-		ImGui::SetWindowFontScale(2.0f);
-		if (ImGui::Button("START"))
-		{
-			if (!progState.isAlgoRunning && grid->isStartAndEndSet())
-			{
-				// only set to true if algorithm chosen
-				progState.isAlgoRunning = true;
-				std::cout << "Started Algorithm" << std::endl;
-			}	
-		}
-	}ImGui::End(); ImGui::PopStyleColor();
-	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(20, 20, 100, 1));
-	ImGui::SetNextWindowBgAlpha(0.8f); // Transparent background
-	ImGui::SetNextWindowPos(ImVec2((work_pos.x + work_size.x) - 200.0f, work_pos.y + 20.0f), ImGuiCond_Always, ImVec2(1.0f, 0.0f));
-	if (ImGui::Begin("RESET", NULL, window_flags)) {
-		ImGui::SetWindowFontScale(1.5f);
-		if (ImGui::Button("RESET") && !progState.isAlgoRunning)
-		{	// Reset App
-			VisReset();
-		}
-	}ImGui::End(); ImGui::PopStyleColor();
-
-	//static ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
-	//ImGui::SetNextWindowBgAlpha(0.0f); // Transparent background
-	//ImGui::SetNextWindowPos(ImVec2(work_pos.x + work_size.x * 0.5f, work_pos.y + 25.0f), ImGuiCond_Always, ImVec2(0.5f, 0.0f));
-	//ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(20, 20, 100, 1));
-	//if (ImGui::Begin("##AC", NULL, window_flags))
-	//{
-	//	ImGui::SetWindowFontScale(1.2f);  
-	//	ImGui::RadioButton("Auto-Calc", &autoCalcToggle);
-	//} ImGui::End(); ImGui::PopStyleColor();
+	ui->UpdateWorkSize();
+	ui->StartAndResets(progState.isAlgoRunning, grid->isStartAndEndSet(), grid);
+	ui->AlgoChoices(input);
+	ui->Status(progState.status);
 }
-/* HELPER FUNCTIONS */
 
+/* HELPER FUNCTIONS */
+void AlgoVis::InitAlgo()
+{
+
+}
+void AlgoVis::ExecAlgo()
+{
+
+}
 void AlgoVis::VisReset()
 {
 	// Clear Board and Paths
@@ -186,7 +157,6 @@ void AlgoVis::VisReset()
 	// Reset Program States
 	std::cout << "Reset Application" << std::endl;
 }
-
 bool AlgoVis::isMouseOnGrid()
 {
 	if (progState.mouseX < 0 || progState.mouseY < 0 ||
@@ -196,7 +166,6 @@ bool AlgoVis::isMouseOnGrid()
 	}
 	return true;
 }
-
 void AlgoVis::transformMousePos(float const scrMouseX, float const scrMouseY)
 {
 	// X & Y need to correspond to coordinate system space and not screen space
@@ -207,6 +176,10 @@ void AlgoVis::transformMousePos(float const scrMouseX, float const scrMouseY)
 		((layout->getCoordSysDim()) * (scrMouseY / layout->getScrHeight())));
 	std::cout << "Transformed Mouse Coords of (" << progState.mouseX << ", " << progState.mouseY << ")" << std::endl;
 }
+
+
+
+
 
 
 

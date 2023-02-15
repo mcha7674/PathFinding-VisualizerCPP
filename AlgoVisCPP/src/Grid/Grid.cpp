@@ -2,6 +2,11 @@
 
 Grid::Grid(int row, int col, glm::mat4 ViewProjMatrix)
 {
+	Init(row, col, ViewProjMatrix);
+}
+
+void Grid::Init(int row, int col, glm::mat4 ViewProjMatrix)
+{
 	ViewProjectionMatrix = ViewProjMatrix;
 	gridProps = std::make_shared<GridProps>();
 	gridProps->height = row;
@@ -11,12 +16,12 @@ Grid::Grid(int row, int col, glm::mat4 ViewProjMatrix)
 	int ID = 0;
 	for (int i = 0; i < row; i++) {
 		for (int j = 0; j < col; j++) {
+			// update ID and add coordinates to hash
 			grid[i][j].ID = ID;
 			cellHash[ID] = { i, j };
 			ID++;
 		}
 	}
-	
 }
 
 void Grid::RenderGrid()
@@ -50,13 +55,13 @@ void Grid::RenderGrid()
 			else {
 				switch (getCellState(i, j))
 				{
-				case cellState::VISITED:
-					fillQuad.setColor(0.3f, 0.3f, 1.0f, 0.8f);
+				case cellState::VISITING: // Visiting will always be set first
+					fillQuad.setColor(0.0f, 1.0f, 1.0f, 1.0f);
 					fillQuad.trans.setPosition({ (float)j, (float)i, 0.0f });
 					renderer.DrawRect(fillQuad.va, *(fillQuad.ib), *(fillQuad.quad_shader), fillQuad.trans);
 					break;
-				case cellState::VISITING:
-					fillQuad.setColor(0.0f, 1.0f, 1.0f, 1.0f);
+				case cellState::VISITED:
+					fillQuad.setColor(0.3f, 0.3f, 1.0f, 0.8f);
 					fillQuad.trans.setPosition({ (float)j, (float)i, 0.0f });
 					renderer.DrawRect(fillQuad.va, *(fillQuad.ib), *(fillQuad.quad_shader), fillQuad.trans);
 					break;
@@ -144,11 +149,11 @@ void Grid::clearBoard()
 {
 	for (int i = 0; i < gridProps->height; i++) {
 		for (int j = 0; j < gridProps->width; j++) {
+			if (grid[i][j].m_Type == cellType::START || grid[i][j].m_Type == cellType::END)
+				continue;
 			grid[i][j].reset(); // reset each cell
 		}
 	}
-	// reset Grid Properties
-	gridProps.reset();
 }
 
 // Unvisit every visited grid and set path cells back to normal

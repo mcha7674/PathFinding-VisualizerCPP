@@ -15,8 +15,7 @@ namespace Algorithms
 	enum class Type
 	{
 		None = 0,
-		BFS, DFS, Dijkstra,
-		AStar
+		BFS, DFS, AStar, Dijkstra
 	};
 
 	class PathFinder 
@@ -28,10 +27,16 @@ namespace Algorithms
 		virtual bool Update() = 0;
 		virtual void Reset() = 0;
 		virtual bool PathUpdate() = 0;
-		virtual void InitPath(int r0, int c0, int rEnd, int cEnd) = 0;
+		virtual void InitPath(int parentCell) = 0;
+		// Getters
+		virtual bool getEndState() { return endFound; }
 	protected:
+		// Every Algorithm Is given a starting Cell
 		std::pair<int, int> m_Start;
+		// Final Path Attributes
 		bool endFound;
+		int currCell; // Temp Storage for final path
+		std::unordered_map<int, std::pair<int, int>> parentHash;
 		// directional arrays (delta row and col)
 		static constexpr const int dr[4] = { 0, 1, 0, -1 };
 		static constexpr const int dc[4] = { 1, 0, -1, 0 };

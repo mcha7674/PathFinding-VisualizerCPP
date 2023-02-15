@@ -86,7 +86,7 @@ namespace GLCore {
 			// Set New ViewPort Dimensions
 			glViewport(0, 0, width, height);
 			// Set Min/MaxSize Dimensions
-			glfwSetWindowSizeLimits(window, 500, 500, GLFW_DONT_CARE, GLFW_DONT_CARE);
+			glfwSetWindowSizeLimits(window, 900, 800, GLFW_DONT_CARE, GLFW_DONT_CARE);
 		});
 
 		glfwSetWindowCloseCallback(m_Window, [](GLFWwindow* window)

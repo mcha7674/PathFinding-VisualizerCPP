@@ -1,23 +1,27 @@
 #pragma once
-#include "AlgoVis.h"
 #include <GLCore.h>
-#include <functional>
+#include <GLCoreUtils.h> 
+#include "../Base_Models/Quad.h"
+#include "../Grid/Grid.h"
+#include "../UserInput.h"
 using namespace GLCore;
 
+
+// Each UI Component needs to have an option for adjusting positioning and Scale //
 class UI
 {
 public:
-	UI(float* UniverseTime, float* TimeStep, GLCore::Utils::OrthographicCameraController* m_CameraController);
-	~UI() {}
+	UI(std::shared_ptr<Utils::OrthographicCameraController> m_CameraController);
+	//~UI() { delete io; delete style; delete viewport; }
+	~UI() = default;
 	void UpdateWorkSize();
 	void InitImGuiGlobalStyling();
-	/*void TimeOverlay();
-	void fastForwardOverlay(uint16_t& fastForward, int& fastForwardActive);
-	void ButtonOverlay(bool& orbitReset, bool& showEnergyPlot, bool& trailReset);
-	void StatsOverlay();
-	void InputsOverlay(bool& orbitReset);
-	void PauseMenu();
-	void CrashMenu();*/
+	void Demo();
+	/* UI Components */
+	void StartAndResets(bool& isAlgoRunning, bool isStartAndEndSet, std::shared_ptr<Grid> grid);
+	void AlgoChoices(UserInput& input);
+	void Status(std::string status = "Choose An Algorithm...");
+	void HelpMenu();
 	// Getters
 	inline ImGuiIO& GetIO() { return *io; }
 	
@@ -25,13 +29,14 @@ private:
 	// imgui unique pointers
 	ImGuiIO* io;
 	ImGuiStyle* style;
-	ImPlotStyle* plotStyle;
 	const ImGuiViewport* viewport;
 	ImVec2 work_pos;
 	ImVec2 work_size;
 
+	
+
 	// shared pointer of camera controller
-	GLCore::Utils::OrthographicCameraController *m_CameraController;	
+	std::shared_ptr<Utils::OrthographicCameraController> m_CameraController;	
 };
 
 

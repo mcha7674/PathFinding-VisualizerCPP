@@ -5,6 +5,9 @@
 
 using std::pair;
 using GLCore::Utils::OrthographicCameraController;
+
+// Color Struct //
+
 /* Program Layout Class */
 class Layout {
 public:

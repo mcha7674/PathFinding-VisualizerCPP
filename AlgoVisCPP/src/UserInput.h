@@ -1,19 +1,14 @@
 #pragma once
 #include "Algorithms/Algorithms.h"
 
-
-class UserInput
+struct UserInput
 {
-public:
+	bool AlgorithmStart;
+	Algorithms::Type algoType;
 	UserInput() { reset(); }
-	void Init();
-	void reset()
+	inline void reset()
 	{
 		AlgorithmStart = false;
 		algoType = Algorithms::Type::None;
 	}
-private:
-	bool AlgorithmStart;
-	Algorithms::Type algoType;
-
 };

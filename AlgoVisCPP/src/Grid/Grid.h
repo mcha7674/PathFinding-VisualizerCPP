@@ -9,7 +9,6 @@
 
 enum class cellState { VISITED = 0, UNVISITED, VISITING };
 enum class cellType { NORMAL = 0, START, END, WALL, PATH };
- // color static vectors:
 
 // Grid Cell Properties //
 struct Cell
@@ -50,6 +49,7 @@ class Grid
 public:
 	Grid(int row, int col, glm::mat4 ViewProjMatrix);
 	~Grid() = default;
+	void Init(int row, int col, glm::mat4 ViewProjMatrix);
 	// Reset Functions
 	void clearBoard();
 	void clearPath();

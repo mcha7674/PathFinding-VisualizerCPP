@@ -5,9 +5,10 @@
 #include <GLCore.h>
 #include "Grid/Grid.h"
 #include "Algorithms/Algorithms.h"
-#include "UI/UserInput.h"
+#include "UI/UI.h"
 #include "Layout.h"
 #include "Algorithms/Algorithms.h"
+#include "UserInput.h"
 
 class AlgoVis : public GLCore::Layer
 {
@@ -26,7 +27,9 @@ public:
 	// Reset Program to Initial state
 	void VisReset();
 	// Algorithm Re-Initializations
-	void InitAlgos();
+	void InitAlgo();
+	// Algorithm Executions
+	void ExecAlgo();
 	// Helper Functions
 	bool isMouseOnGrid();
 	void transformMousePos(float const scrMouseX, float const scrMouseY);
@@ -37,12 +40,15 @@ private:
 		int mouseY;
 		// Mouse is Held Down
 		bool mouseBPressed;
-		// grid alteration in progress state 
+		// Auto Calculate Algo 
+		bool autoCalc;
 		// algorithm currently executing state.
 		bool isAlgoRunning;
+		// Status Field
+		std::string status;
 		ProgStates() {
 			 mouseX = mouseY = 0;
-			 mouseBPressed  = isAlgoRunning = false;
+			 mouseBPressed = autoCalc = isAlgoRunning = false;
 		}
 	};
 	ProgStates progState;
@@ -52,13 +58,15 @@ private:
 	std::shared_ptr<Grid> grid;
 	// Algorithms //
 	std::unique_ptr<Algorithms::PathFinder> bfs;
+	//////////  UI //////////
+	std::unique_ptr<UI> ui;
+	UserInput input; // user input
 	////////// Rendering //////////
 	Renderer renderer;
-	//////////  UI //////////
-	//UserInput input; // user input
 	////////// AlgoVis Camera //////////
 	std::shared_ptr<GLCore::Utils::OrthographicCameraController> m_CameraController;	
 };
+
 
 
 

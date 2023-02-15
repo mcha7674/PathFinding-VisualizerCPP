@@ -13,11 +13,9 @@ namespace Algorithms
 		virtual bool Update() override;
 		virtual void Reset() override;
 		virtual bool PathUpdate() override;
-		virtual void InitPath(int r0, int c0, int rEnd, int cEnd) override;
+		virtual void InitPath(int parentCell) override;
 	private:
 		std::queue <int> q;
-		std::unordered_map<int, std::pair<int, int>> cellParentHash;
-		int currCell;
 		std::shared_ptr<Grid> m_Grid;
 	};
 
