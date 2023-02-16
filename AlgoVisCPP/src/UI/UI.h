@@ -3,10 +3,8 @@
 #include <GLCoreUtils.h> 
 #include "../Base_Models/Quad.h"
 #include "../Grid/Grid.h"
-#include "../UserInput.h"
 #include "../Algorithms/Algorithms.h"
 #include "../ProgramState.h"
-#include "../UserInput.h"
 using namespace GLCore;
 
 // Each UI Component needs to have an option for adjusting positioning and Scale //

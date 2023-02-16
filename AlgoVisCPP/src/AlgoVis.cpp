@@ -4,7 +4,7 @@ using namespace GLCore;
 using namespace GLCore::Utils;
 
 AlgoVis::AlgoVis()
-	:Layer("C++ Algorithm Visualizer")  
+	:Layer("C++ Pathfinding Algorithm Visualizer")  
 {
 	Init();
 }
@@ -25,11 +25,9 @@ void AlgoVis::Init()
 	// Init Layout
 	layout = std::make_unique<Layout>(Application::Get().GetWindow().GetWidth(),
 		Application::Get().GetWindow().GetHeight(), m_CameraController);
-	layout->setCoordSys(35); // Set Height and Width for our coordinate system originating from (0,0)
-	layout->setLimitMultiplier(0.7);
+	layout->setCoordSys(30); // Set Height and Width for our coordinate system originating from (0,0)
 	// Init Grid //
-	// Height of grid will shorter than max coord system height to make room for UI
-	grid = std::make_shared<Grid>((int)(layout->getCoordSysDim() * layout->getMultiplier()), 
+	grid = std::make_shared<Grid>(layout->uiAdjustedGridHeight(),
 		layout->getCoordSysDim(), m_CameraController->GetCamera().GetViewProjectionMatrix());
 	grid->setGridColor(0.0f, 0.0f, 0.0f);
 	// Initiate Current Algorithm //
@@ -37,8 +35,6 @@ void AlgoVis::Init()
 	// Init UI //
 	ui = std::make_unique<UI>(m_CameraController);
 }
-
-
 ////////// Event Handling /////////////
 void AlgoVis::OnEvent(Event& event)
 { 
@@ -47,16 +43,10 @@ void AlgoVis::OnEvent(Event& event)
 	dispatcher.Dispatch<WindowResizeEvent>(
 		[&](WindowResizeEvent& e) { 
 			layout->updateScrDimensions({ Application::Get().GetWindow().GetWidth(), Application::Get().GetWindow().GetHeight() });
-			std::cout << "ScreenDim: (" << layout->getScrWidth() << ", " << layout->getScrHeight() <<")" << std::endl;
-			// I want the the Grid to always leave 320 pixels of space in the Y direction.
-			// Add limitations to handle Maximizing and Minimizing Window
-			std::cout << "Multiplier: " << (float)(layout->getScrHeight() - (300)) / (float)layout->getScrHeight() << std::endl;
-			float newHeightMultiplier = (float)(layout->getScrHeight() - (300)) / (float)layout->getScrHeight();
-			int newRowHeight = (int)((float)layout->getCoordSysDim() * layout->getMultiplier());
-			std::cout << "Row Height: " << newRowHeight << std::endl;
-			layout->setLimitMultiplier(newHeightMultiplier);
+			// Re Adjust Grid and Reset Program.
 			grid->reset();
-			grid->Init(newRowHeight, layout->getCoordSysDim(), m_CameraController->GetCamera().GetViewProjectionMatrix());
+			grid->Init(layout->uiAdjustedGridHeight(),
+				layout->getCoordSysDim(), m_CameraController->GetCamera().GetViewProjectionMatrix());
 			VisReset();
 			return true;
 		});
@@ -104,13 +94,8 @@ void AlgoVis::OnEvent(Event& event)
 			default:
 				break;
 			}
-			return true; // event handled
-		});
-	/* Bindings that only listen if algorithm is NOT running */
-	if (!progState.isAlgoRunning) {
-		dispatcher.Dispatch<KeyPressedEvent>(
-			[&](KeyPressedEvent& e) {
-				std::cout << "Pressed: (" << e.GetKeyCode() << ", " << e.GetName() << ")" << std::endl;
+			// Key Bindings that Are only listened to if algorithm is not running
+			if (!progState.isAlgoRunning) {
 				switch (e.GetKeyCode()) {
 				case KEY_UP: // increase grid size by 5
 					changeCoordSysSize(1);
@@ -121,10 +106,10 @@ void AlgoVis::OnEvent(Event& event)
 				default:
 					break;
 				}
-				return true; // event handled
-			});
-	}
-
+			}
+			
+			return true; // event handled
+		});
 	// The following events are only for events WITHIN GRID BOUNDARY //
 	if (isMouseOnGrid() && !progState.isAlgoRunning)
 	{
@@ -176,28 +161,29 @@ void AlgoVis::OnUpdate(Timestep ts)
 	Application::Get().GetWindow().Clear(241.0f /255.0f, 240.0f /255.0f, 255.0f /255.0f, 1.0f);
 	renderer.Clear(true);
 	grid->RenderGridLines();
-	// Animate Algorithm if executed//
+	// Execute each Step of the Chosen Algorithm //
 	if (progState.isAlgoRunning) {
 		for (int i = 0; i < progState.speed; i++) {
-			// Let the Final Path Animation go at normal speed
-			//if (currAlgo->getEndState() == true) { i = progState.speed - 1; }
-			progState.isAlgoRunning = currAlgo->Update(); // Update Grid
+			progState.isAlgoRunning = currAlgo->Update();
 		}
 	}
 	grid->RenderGrid(); 
 }
-
 /*  UI IMGUI Render Layer  */
 void AlgoVis::OnImGuiRender()
 {
+	std::cout << "IN IMGUI RENDER" << std::endl;
 	ui->UpdateWorkSize();
+	// Start and Reset Buttons
 	ui->StartAndResets(progState, currAlgo, grid);
+	// Sets the Current Algorithm through polymorphism
 	ui->AlgoChoices(currAlgo, grid);
+	// Shows the current status of the user.
 	ui->Status(progState.status);
 	ui->HelpMenu();
 	ui->Legend();
 }
-
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /* HELPER FUNCTIONS */
 void AlgoVis::InitAlgo()
 {
@@ -210,16 +196,14 @@ void AlgoVis::InitAlgo()
 
 void AlgoVis::changeCoordSysSize(int numToAdd)
 {
-	if (layout->getCoordSysDim() <= 6 && numToAdd < 0) { layout->setCoordSys(6); std::cout << "Cannot Change Size Further!!" << std::endl; }
-	else if (layout->getCoordSysDim() >= 100 && numToAdd > 0) { layout->setCoordSys(100); std::cout << "Cannot Change Size Further!!" << std::endl; }
+	if (layout->getCoordSysDim() <= 10 && numToAdd < 0) 
+	{ layout->setCoordSys(5); std::cout << "Cannot Change Size Further!!" << std::endl; }
+	else if (layout->getCoordSysDim() >= 100 && numToAdd > 0) 
+	{ layout->setCoordSys(100); std::cout << "Cannot Change Size Further!!" << std::endl; }
 	else {
 		layout->setCoordSys(layout->getCoordSysDim() + numToAdd);
-		float newHeightMultiplier = (float)(layout->getScrHeight() - (300)) / (float)layout->getScrHeight();
-		int newRowHeight = (int)((float)layout->getCoordSysDim() * layout->getMultiplier());
-		std::cout << "Row Height: " << newRowHeight << std::endl;
-		layout->setLimitMultiplier(newHeightMultiplier);
 		grid->reset();
-		grid->Init(newRowHeight,
+		grid->Init(layout->uiAdjustedGridHeight(),
 			layout->getCoordSysDim(), m_CameraController->GetCamera().GetViewProjectionMatrix());
 	}
 }
@@ -248,7 +232,7 @@ void AlgoVis::transformMousePos(float const scrMouseX, float const scrMouseY)
 		(scrMouseX / layout->getScrWidth()));
 	progState.mouseY = ((layout->getCoordSysDim()) -
 		((layout->getCoordSysDim()) * (scrMouseY / layout->getScrHeight())));
-	std::cout << "Transformed Mouse Coords of (" << progState.mouseX << ", " << progState.mouseY << ")" << std::endl;
+	//std::cout << "Transformed Mouse Coords of (" << progState.mouseX << ", " << progState.mouseY << ")" << std::endl;
 }
 
 

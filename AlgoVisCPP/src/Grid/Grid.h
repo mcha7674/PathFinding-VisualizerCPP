@@ -39,8 +39,8 @@ struct GridProps {
 	void reset() {
 		startPointSet = false;
 		endPointSet = false;
-		startCoord = { 0, 0 };
-		endCoord = { 0, 0 };
+		startCoord = { -1, -1 };
+		endCoord = { -2, -2 };
 	}
 };
 

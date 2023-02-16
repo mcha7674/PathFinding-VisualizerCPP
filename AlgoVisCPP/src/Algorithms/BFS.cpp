@@ -7,8 +7,9 @@ namespace Algorithms
 	void BFS::Init(std::pair<int, int> start)
 	{
 		// start clean
-		Reset();
-		m_Start = start;
+		PathFinder::Init(start);
+		// Clear Previous Queue if Any
+		q = {};
 		// push Cell ID
 		q.push(m_Grid->getCellID(m_Start.first, m_Start.second));
 	}
@@ -70,17 +71,5 @@ namespace Algorithms
 		}	
 		return false;
 	}
-	void BFS::InitPath(int parentCell)
-	{
-		currCell = parentCell;
-	}
-
-	void BFS::Reset()
-	{
-		q = {};
-		endFound = false;
-		parentHash.clear();
-	}
-
 
 }

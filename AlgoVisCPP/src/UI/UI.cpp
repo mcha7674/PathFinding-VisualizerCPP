@@ -122,6 +122,7 @@ void UI::AlgoChoices(std::shared_ptr<Algorithms::PathFinder> &currAlgo, std::sha
                         currAlgo.reset(new Algorithms::DFS(grid));
                     }
                     else if (n == 2) std::cout << "ASTAR NOT IMPEMENTED YET" << std::endl;;
+                    // Initiate the chosen algorithm
                     if (grid->isStartAndEndSet()) {
                         grid->clearPath(); // clear the last path as we are executing again
                         currAlgo->Init(grid->getStartCoord()); // Initiate algorithm and clear data from a previous run

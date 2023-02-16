@@ -13,27 +13,21 @@ namespace Algorithms
 	using namespace std::chrono_literals;
 	using std::chrono::system_clock;
 
-	enum class Type
-	{
-		None = 0,
-		BFS, DFS, AStar, Dijkstra
-	};
+	enum class SearchType {FOURWAY = 1, EIGHTWAY};
 
 	class PathFinder 
 	{
 	public:
 		virtual ~PathFinder() = default;
-		//virtual void Execute(std::pair<int, int> start) = 0;
-		virtual void Init(std::pair<int, int> start) = 0;
 		virtual bool Update() = 0;
-		virtual void Reset() = 0;
 		virtual bool PathUpdate() = 0;
-		virtual void InitPath(int parentCell) = 0;
-		virtual std::string getName() {
-			return Name;
-		}
+		// Initializers
+		virtual inline void Init(std::pair<int, int> start) {m_Start = start; endFound = false; parentHash.clear();}
+		virtual inline void InitPath(int parentCell) { currCell = parentCell; }
 		// Getters
-		virtual bool getEndState() { return endFound; }
+		virtual inline std::string getName() { return Name; }
+		virtual inline bool getEndState() { return endFound; }
+		virtual inline SearchType getSearchType() { return searchType; }
 	protected:
 		// Every Algo Has A Name
 		std::string Name;
@@ -41,10 +35,12 @@ namespace Algorithms
 		std::pair<int, int> m_Start;
 		// Final Path Attributes
 		bool endFound;
-		int currCell; // Temp Storage for final path
+		// Temp Storage for final path
+		int currCell; 
+		// A Hash table that Stores the Cell ID With its Parent Cell's Coordinate
 		std::unordered_map<int, std::pair<int, int>> parentHash;
-		// directional arrays (delta row and col)
-		int numDirections;
+		// Search Type and that type's coordinate Arrays
+		SearchType searchType;
 		static constexpr const int dr4[4] = { 0, 1, 0, -1 };
 		static constexpr const int dc4[4] = { 1, 0, -1, 0 };
 		static constexpr const int dr8[8] = { 1, 1, 0, -1, -1, -1, 0, 1 };

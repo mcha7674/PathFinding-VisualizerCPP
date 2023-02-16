@@ -7,9 +7,7 @@
 #include "Algorithms/Algorithms.h"
 #include "UI/UI.h"
 #include "Layout.h"
-#include "Algorithms/Algorithms.h"
 #include "ProgramState.h"
-#include "UserInput.h"
 
 class AlgoVis : public GLCore::Layer
 {
@@ -40,11 +38,10 @@ private:
 	std::unique_ptr<Layout> layout;
 	// The Grid //
 	std::shared_ptr<Grid> grid;
-	// Algorithms //
+	// Algorithm //
 	std::shared_ptr<Algorithms::PathFinder> currAlgo;
 	//////////  UI //////////
 	std::unique_ptr<UI> ui;
-	UserInput input;
 	////////// Rendering //////////
 	Renderer renderer;
 	////////// AlgoVis Camera //////////

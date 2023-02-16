@@ -108,22 +108,16 @@ void Grid::setCellType(int row, int col, cellType type)
 	{
 	case cellType::START:
 		if (gridProps->endCoord == currCoord) break;
-		gridProps->startPointSet = true;
 		// if Start node has been set already, reset it to a normal cell and set this new one
-		if (gridProps->startPointSet) {
-			grid[gridProps->startCoord.first][gridProps->startCoord.second].m_Type = cellType::NORMAL;
-		}
+		gridProps->startPointSet = true;
 		gridProps->startCoord = { row, col };
 		grid[row][col].m_Type = type;
 		grid[row][col].m_State = cellState::VISITED;
 		break;
 	case cellType::END:
 		if (gridProps->startCoord == currCoord) break;
-		gridProps->endPointSet = true;
 		// if End node has been set already, reset it to a normal cell and set this new one
-		if (gridProps->endPointSet) {
-			grid[gridProps->endCoord.first][gridProps->endCoord.second].m_Type = cellType::NORMAL;
-		}
+		gridProps->endPointSet = true;
 		gridProps->endCoord = { row, col };
 		grid[row][col].m_Type = type;
 		break;

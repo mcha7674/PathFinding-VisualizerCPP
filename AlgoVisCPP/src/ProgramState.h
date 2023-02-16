@@ -23,7 +23,7 @@ struct ProgState {
 		mouseX = mouseY = 0;
 		speed = 1;
 		mouseBPressed = isAlgoRunning = false;
-		status = "Current Algorithm: BFS";
+		status = "";
 		
 	}
 };

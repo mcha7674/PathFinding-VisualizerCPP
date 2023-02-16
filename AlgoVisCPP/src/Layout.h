@@ -13,41 +13,44 @@ class Layout {
 public:
 	Layout(int screenWidth, int screenHeight, 
 		std::shared_ptr<OrthographicCameraController> CamControl,
-		int CoordSys = 20)
+		int CoordSys = 20, int uiSpace = 300)
 	{
-		coordSys = CoordSys;
-		screenDimensions = { screenWidth, screenHeight };
-		camControl = CamControl;
-		GridHeight_LimitMultiplier = 1.0f;
+		m_coordSys = CoordSys;
+		m_scrDimensions = { screenWidth, screenHeight };
+		m_camControl = CamControl;
+		m_uiSpace = uiSpace;
 		// Set Initial Orthographic Projection
-		camControl->GetCamera().SetProjection(0.0f, (float)coordSys, 0.0f, (float)coordSys);
+		m_camControl->GetCamera().SetProjection(0.0f, (float)m_coordSys, 0.0f, (float)m_coordSys);
 	}
 	~Layout() = default;
 	// Getters
-	inline uint32_t getScrHeight() { return screenDimensions.second; }
-	inline uint32_t getScrWidth() { return screenDimensions.first; }
-	inline uint32_t getCoordSysDim() { return coordSys; }
-	inline float getMultiplier() { return GridHeight_LimitMultiplier; }
+	inline uint32_t getScrHeight() { return m_scrDimensions.second; }
+	inline uint32_t getScrWidth() { return m_scrDimensions.first; }
+	inline uint32_t getCoordSysDim() { return m_coordSys; }
+	inline void setUISpace(int uiSpace) { m_uiSpace = uiSpace; }
 	// Coordinate System Setters
 	void setCoordSys(int newCS) {
-		coordSys = newCS;
-		camControl->GetCamera().SetProjection(0.0f, (float)coordSys, 0.0f, (float)coordSys);
+		m_coordSys = newCS;
+		m_camControl->GetCamera().SetProjection(0.0f, (float)m_coordSys, 0.0f, (float)m_coordSys);
 	}
 	void updateScrDimensions(pair<int, int>dim) {
-		screenDimensions = dim; std::cout << "Updating Screen Dimensions" << std::endl;
+		m_scrDimensions = dim;
+		std::cout << "Updating Screen Dimensions" << std::endl;
 	}
-	void setLimitMultiplier(float percentScr)
-	{
-		GridHeight_LimitMultiplier = percentScr;
+	int uiAdjustedGridHeight() {
+		int newHeight = (int)((float)m_coordSys / (float)m_scrDimensions.second *
+			((float)m_scrDimensions.second - (float)m_uiSpace));
+		return newHeight;
 	}
+	
 	
 private:
 	// Screen Coordinate System - max X and H
-	int coordSys;
+	int m_coordSys;
+	// How much space in pixels is allocated to the UI
+	int m_uiSpace;
 	// Screen Height and Width
-	pair < int, int > screenDimensions;
-	// how much of the screen the grid should take up height-wise //
-	float GridHeight_LimitMultiplier;
+	pair < int, int > m_scrDimensions;
 	// Pointer to the orthographic camera controller
-	std::shared_ptr<OrthographicCameraController> camControl;
+	std::shared_ptr<OrthographicCameraController> m_camControl;
 };

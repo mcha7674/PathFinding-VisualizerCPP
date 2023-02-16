@@ -6,13 +6,12 @@ namespace Algorithms
 	// Init 
 	void DFS::Init(std::pair<int, int> start)
 	{
-		// start clean
-		Reset();
-		m_Start = start;
-		// push Cell ID
+		PathFinder::Init(start);
+		// Clear Previous Stack
+		s = {};
+		// Push Starting Cell ID
 		s.push(m_Grid->getCellID(m_Start.first, m_Start.second));
-	}
-	// Update 
+	} 
 	bool DFS::Update()
 	{
 		std::cout << "RUNNING DFS ALGO..." << std::endl;
@@ -54,8 +53,6 @@ namespace Algorithms
 			}
 			return true; // Algorithm continues runnint
 		}
-		// Program only reaches this portion if End is found Or Queue was empty
-		// is path update returns true, it means we continue to update next frame
 		return PathUpdate();
 	}
 
@@ -70,17 +67,6 @@ namespace Algorithms
 			return true;
 		}
 		return false;
-	}
-	void DFS::InitPath(int parentCell)
-	{
-		currCell = parentCell;
-	}
-
-	void DFS::Reset()
-	{
-		s = {};
-		endFound = false;
-		parentHash.clear();
 	}
 
 
