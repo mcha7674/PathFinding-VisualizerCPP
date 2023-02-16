@@ -3,8 +3,6 @@
 using namespace GLCore;
 using namespace GLCore::Utils;
 
-bool autoCalcToggle = false;
-
 AlgoVis::AlgoVis()
 	:Layer("C++ Algorithm Visualizer")  
 {
@@ -13,7 +11,7 @@ AlgoVis::AlgoVis()
 void AlgoVis::OnAttach()
 {   // AlgoVis's gl prelims 
 	EnableGLDebugging();
-	glEnable(GL_LINE_SMOOTH);
+	//glEnable(GL_LINE_SMOOTH);
 }
 void AlgoVis::OnDetach()
 {
@@ -27,18 +25,20 @@ void AlgoVis::Init()
 	// Init Layout
 	layout = std::make_unique<Layout>(Application::Get().GetWindow().GetWidth(),
 		Application::Get().GetWindow().GetHeight(), m_CameraController);
-	layout->setCoordSys(20); // Set Height and Width for our coordinate system originating from (0,0)
+	layout->setCoordSys(35); // Set Height and Width for our coordinate system originating from (0,0)
 	layout->setLimitMultiplier(0.7);
 	// Init Grid //
 	// Height of grid will shorter than max coord system height to make room for UI
 	grid = std::make_shared<Grid>((int)(layout->getCoordSysDim() * layout->getMultiplier()), 
 		layout->getCoordSysDim(), m_CameraController->GetCamera().GetViewProjectionMatrix());
 	grid->setGridColor(0.0f, 0.0f, 0.0f);
-	// Init Algorithms //
-	bfs = std::make_unique<Algorithms::BFS>(grid);
+	// Initiate Current Algorithm //
+	currAlgo = std::make_shared<Algorithms::BFS>(grid);
 	// Init UI //
 	ui = std::make_unique<UI>(m_CameraController);
 }
+
+
 ////////// Event Handling /////////////
 void AlgoVis::OnEvent(Event& event)
 { 
@@ -47,11 +47,24 @@ void AlgoVis::OnEvent(Event& event)
 	dispatcher.Dispatch<WindowResizeEvent>(
 		[&](WindowResizeEvent& e) { 
 			layout->updateScrDimensions({ Application::Get().GetWindow().GetWidth(), Application::Get().GetWindow().GetHeight() });
+			std::cout << "ScreenDim: (" << layout->getScrWidth() << ", " << layout->getScrHeight() <<")" << std::endl;
+			// I want the the Grid to always leave 320 pixels of space in the Y direction.
+			// Add limitations to handle Maximizing and Minimizing Window
+			std::cout << "Multiplier: " << (float)(layout->getScrHeight() - (300)) / (float)layout->getScrHeight() << std::endl;
+			float newHeightMultiplier = (float)(layout->getScrHeight() - (300)) / (float)layout->getScrHeight();
+			int newRowHeight = (int)((float)layout->getCoordSysDim() * layout->getMultiplier());
+			std::cout << "Row Height: " << newRowHeight << std::endl;
+			layout->setLimitMultiplier(newHeightMultiplier);
+			grid->reset();
+			grid->Init(newRowHeight, layout->getCoordSysDim(), m_CameraController->GetCamera().GetViewProjectionMatrix());
+			VisReset();
 			return true;
 		});
+	
 	dispatcher.Dispatch<MouseMovedEvent>(
 		[&](MouseMovedEvent& e) { // Store Transformed (to coordinate System) Mouse Positions
 			// Transform Screen Coordinates to Grid Coordinates
+			std::cout << "Screen Mouse Coords of (" << e.GetX() << ", " << e.GetY() << ")" << std::endl;
 			transformMousePos(e.GetX(), e.GetY());
 			return true;
 		});
@@ -61,10 +74,61 @@ void AlgoVis::OnEvent(Event& event)
 				progState.mouseBPressed = false;
 			return true; // event handled
 		});
+
+	/* KEY BINDINGS */
+	// Key Bindings that Don't care if Algorithm is currently Running
+	dispatcher.Dispatch<KeyPressedEvent>(
+		[&](KeyPressedEvent& e) {
+			std::cout << "Pressed: (" << e.GetKeyCode() << ", " << e.GetName() << ")" << std::endl;
+			switch (e.GetKeyCode()) {
+			case KEY_RIGHT: // increase grid size by 5
+				progState.speed++;
+				std::cout << "Speed: " << progState.speed << std::endl;
+				break;
+			case KEY_LEFT: // decrease grid size by 5
+				progState.speed--;
+				std::cout << "Speed: " << progState.speed << std::endl;
+				break;
+			case KEY_SPACE: // Start Or Pause Algorithm
+				if (!progState.isAlgoRunning && grid->isStartAndEndSet())
+				{
+					// only set to true if algorithm chosen
+					progState.isAlgoRunning = true;
+					std::cout << "Started Algorithm" << std::endl;
+				}
+				else if (progState.isAlgoRunning) { // Stop Button Functionality is algorithm is Running
+					progState.isAlgoRunning = false;
+					std::cout << "Stopped Algorithm" << std::endl;
+				}
+				break;
+			default:
+				break;
+			}
+			return true; // event handled
+		});
+	/* Bindings that only listen if algorithm is NOT running */
+	if (!progState.isAlgoRunning) {
+		dispatcher.Dispatch<KeyPressedEvent>(
+			[&](KeyPressedEvent& e) {
+				std::cout << "Pressed: (" << e.GetKeyCode() << ", " << e.GetName() << ")" << std::endl;
+				switch (e.GetKeyCode()) {
+				case KEY_UP: // increase grid size by 5
+					changeCoordSysSize(1);
+					break;
+				case KEY_DOWN: // decrease grid size by 5
+					changeCoordSysSize(-1);
+					break;
+				default:
+					break;
+				}
+				return true; // event handled
+			});
+	}
+
 	// The following events are only for events WITHIN GRID BOUNDARY //
 	if (isMouseOnGrid() && !progState.isAlgoRunning)
 	{
-		std::cout << "Mouse On Cell: (" << progState.mouseX << ", " << progState.mouseY << ")" << std::endl;
+		//std::cout << "Mouse On Cell: (" << progState.mouseX << ", " << progState.mouseY << ")" << std::endl;
 		int row = progState.mouseY;
 		int col = progState.mouseX;
 		dispatcher.Dispatch<MouseButtonReleasedEvent>(
@@ -77,13 +141,7 @@ void AlgoVis::OnEvent(Event& event)
 					} else if (!grid->isEndSet()) { // If grid end point not set yet, Next button release is end point
 						grid->setCellType(row, col, cellType::END);
 					}
-					// If Start amd end nodes are ready, clear path and re initialize. WIll restart algo if placing walls down as well
-					if (grid->isStartAndEndSet()){ // run chosen algo only is both start and end cells placed
-						// Init the correct algorithm for updating
-						grid->clearPath(); // after mouse button released on grid, clear path for new algo calculation
-						bfs->Init(grid->getStartCoord()); // run algorithm	
-						//progState.isAlgoRunning = true;
-					}
+					InitAlgo();
 				}
 				return true; // event handled
 			});
@@ -120,12 +178,10 @@ void AlgoVis::OnUpdate(Timestep ts)
 	grid->RenderGridLines();
 	// Animate Algorithm if executed//
 	if (progState.isAlgoRunning) {
-		progState.status = "Currently Executing Algorithm";
-		progState.isAlgoRunning = bfs->Update();
-		if (!progState.isAlgoRunning) {
-			progState.status = "Execution Complete";
-			if (bfs->getEndState()) progState.status += "(End Found)";
-			else progState.status += "(End Not Found)";
+		for (int i = 0; i < progState.speed; i++) {
+			// Let the Final Path Animation go at normal speed
+			//if (currAlgo->getEndState() == true) { i = progState.speed - 1; }
+			progState.isAlgoRunning = currAlgo->Update(); // Update Grid
 		}
 	}
 	grid->RenderGrid(); 
@@ -135,26 +191,44 @@ void AlgoVis::OnUpdate(Timestep ts)
 void AlgoVis::OnImGuiRender()
 {
 	ui->UpdateWorkSize();
-	ui->StartAndResets(progState.isAlgoRunning, grid->isStartAndEndSet(), grid);
-	ui->AlgoChoices(input);
+	ui->StartAndResets(progState, currAlgo, grid);
+	ui->AlgoChoices(currAlgo, grid);
 	ui->Status(progState.status);
+	ui->HelpMenu();
+	ui->Legend();
 }
 
 /* HELPER FUNCTIONS */
 void AlgoVis::InitAlgo()
 {
-
+	// Init the correct algorithm for updating only if start and end nodes set
+	if (grid->isStartAndEndSet()) {
+		grid->clearPath(); // clear the last path as we are executing again
+		currAlgo->Init(grid->getStartCoord()); // Initiate algorithm and clear data from a previous run
+	}
 }
-void AlgoVis::ExecAlgo()
-{
 
+void AlgoVis::changeCoordSysSize(int numToAdd)
+{
+	if (layout->getCoordSysDim() <= 6 && numToAdd < 0) { layout->setCoordSys(6); std::cout << "Cannot Change Size Further!!" << std::endl; }
+	else if (layout->getCoordSysDim() >= 100 && numToAdd > 0) { layout->setCoordSys(100); std::cout << "Cannot Change Size Further!!" << std::endl; }
+	else {
+		layout->setCoordSys(layout->getCoordSysDim() + numToAdd);
+		float newHeightMultiplier = (float)(layout->getScrHeight() - (300)) / (float)layout->getScrHeight();
+		int newRowHeight = (int)((float)layout->getCoordSysDim() * layout->getMultiplier());
+		std::cout << "Row Height: " << newRowHeight << std::endl;
+		layout->setLimitMultiplier(newHeightMultiplier);
+		grid->reset();
+		grid->Init(newRowHeight,
+			layout->getCoordSysDim(), m_CameraController->GetCamera().GetViewProjectionMatrix());
+	}
 }
 void AlgoVis::VisReset()
 {
 	// Clear Board and Paths
 	grid->reset();
-	// Reset Inputs
 	// Reset Program States
+	progState.Reset();
 	std::cout << "Reset Application" << std::endl;
 }
 bool AlgoVis::isMouseOnGrid()

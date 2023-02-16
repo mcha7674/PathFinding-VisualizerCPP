@@ -8,6 +8,7 @@
 #include "UI/UI.h"
 #include "Layout.h"
 #include "Algorithms/Algorithms.h"
+#include "ProgramState.h"
 #include "UserInput.h"
 
 class AlgoVis : public GLCore::Layer
@@ -28,39 +29,22 @@ public:
 	void VisReset();
 	// Algorithm Re-Initializations
 	void InitAlgo();
-	// Algorithm Executions
-	void ExecAlgo();
 	// Helper Functions
 	bool isMouseOnGrid();
 	void transformMousePos(float const scrMouseX, float const scrMouseY);
+	void changeCoordSysSize(int numToAdd);
 private:
-	struct ProgStates {
-		// store mouse position state
-		int mouseX;
-		int mouseY;
-		// Mouse is Held Down
-		bool mouseBPressed;
-		// Auto Calculate Algo 
-		bool autoCalc;
-		// algorithm currently executing state.
-		bool isAlgoRunning;
-		// Status Field
-		std::string status;
-		ProgStates() {
-			 mouseX = mouseY = 0;
-			 mouseBPressed = autoCalc = isAlgoRunning = false;
-		}
-	};
-	ProgStates progState;
+	// Program State
+	ProgState progState;
 	// Layout //
 	std::unique_ptr<Layout> layout;
 	// The Grid //
 	std::shared_ptr<Grid> grid;
 	// Algorithms //
-	std::unique_ptr<Algorithms::PathFinder> bfs;
+	std::shared_ptr<Algorithms::PathFinder> currAlgo;
 	//////////  UI //////////
 	std::unique_ptr<UI> ui;
-	UserInput input; // user input
+	UserInput input;
 	////////// Rendering //////////
 	Renderer renderer;
 	////////// AlgoVis Camera //////////

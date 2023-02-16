@@ -24,9 +24,9 @@ public:
 	}
 	~Layout() = default;
 	// Getters
-	inline int32_t getScrHeight() { return screenDimensions.second; }
-	inline int32_t getScrWidth() { return screenDimensions.first; }
-	inline int32_t getCoordSysDim() { return coordSys; }
+	inline uint32_t getScrHeight() { return screenDimensions.second; }
+	inline uint32_t getScrWidth() { return screenDimensions.first; }
+	inline uint32_t getCoordSysDim() { return coordSys; }
 	inline float getMultiplier() { return GridHeight_LimitMultiplier; }
 	// Coordinate System Setters
 	void setCoordSys(int newCS) {

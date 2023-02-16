@@ -45,10 +45,10 @@ namespace GLCore {
 		virtual bool IsVSync() const = 0;
 		virtual void Clear(float r = 0.0f, float g = 0.0f, float b = 0.0f, float a = 1.0f) const = 0;
 
+		// (Only Windows) - returns WindowsWindow if using windows
 		virtual void* GetNativeWindow() const = 0;
 
 		// Only Non virtual function, Gets implemented for windows per platform
-		// (Only Windows) - returns WindowsWindow if using windows
 		static Window* Create(const WindowProps& props = WindowProps());
 	};
 

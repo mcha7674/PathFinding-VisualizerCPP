@@ -52,7 +52,11 @@ namespace GLCore {
 			glfwSetErrorCallback(GLFWErrorCallback);
 			s_GLFWInitialized = true;
 		}
+
 		// GLFW Window Creation Prelims //
+		
+		// Window Hints
+
 		// -- Set GLFW Window using Window Data
 		m_Window = glfwCreateWindow((int)props.Width, (int)props.Height, m_Data.Title.c_str(), nullptr, nullptr);
 		glfwMakeContextCurrent(m_Window);
@@ -69,6 +73,12 @@ namespace GLCore {
 		// SetVSync to true
 		SetVSync(true);
 
+		// TURN OFF MAX AND MIN BOXES (WINDOWS AND C++ SPECIFIC)
+		auto windowHandle = GetActiveWindow();
+		long Style = GetWindowLong(windowHandle, GWL_STYLE);
+		Style &= ~WS_MAXIMIZEBOX; //this makes it still work when WS_MAXIMIZEBOX is actually already toggled off
+		Style &= ~WS_MINIMIZEBOX; //this makes it still work when WS_MAXIMIZEBOX is actually already toggled off
+		SetWindowLong(windowHandle, GWL_STYLE, Style);
 
 		// Init() Will Set And Define our GLFW callbacks //
 		// Lambda Expressions used for the callback function //
@@ -93,7 +103,6 @@ namespace GLCore {
 		{
 			WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
 			WindowCloseEvent event;
-			// Dispatch the event
 			data.EventCallback(event);
 		});
 										

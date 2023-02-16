@@ -4,8 +4,10 @@
 #include "../Base_Models/Quad.h"
 #include "../Grid/Grid.h"
 #include "../UserInput.h"
+#include "../Algorithms/Algorithms.h"
+#include "../ProgramState.h"
+#include "../UserInput.h"
 using namespace GLCore;
-
 
 // Each UI Component needs to have an option for adjusting positioning and Scale //
 class UI
@@ -18,10 +20,12 @@ public:
 	void InitImGuiGlobalStyling();
 	void Demo();
 	/* UI Components */
-	void StartAndResets(bool& isAlgoRunning, bool isStartAndEndSet, std::shared_ptr<Grid> grid);
-	void AlgoChoices(UserInput& input);
+	void StartAndResets(ProgState& progState, std::shared_ptr<Algorithms::PathFinder> &currAlgo, std::shared_ptr<Grid> grid);
+	void AlgoChoices(std::shared_ptr<Algorithms::PathFinder> &currAlgo, std::shared_ptr<Grid> grid);
 	void Status(std::string status = "Choose An Algorithm...");
 	void HelpMenu();
+	void Toggles();
+	void Legend();
 	// Getters
 	inline ImGuiIO& GetIO() { return *io; }
 	

@@ -1,28 +1,29 @@
+#include "DFS.h"
 
-#include "BFS.h"
 
 namespace Algorithms
 {
 	// Init 
-	void BFS::Init(std::pair<int, int> start)
+	void DFS::Init(std::pair<int, int> start)
 	{
 		// start clean
 		Reset();
 		m_Start = start;
 		// push Cell ID
-		q.push(m_Grid->getCellID(m_Start.first, m_Start.second));
+		s.push(m_Grid->getCellID(m_Start.first, m_Start.second));
 	}
 	// Update 
-	bool BFS::Update()
+	bool DFS::Update()
 	{
-		std::cout << "RUNNING BFS ALGO..." << std::endl;
-		// if q is NOT empty AND end has Not be found yet, keep searching!
-		if (!q.empty() && !endFound) 
+		std::cout << "RUNNING DFS ALGO..." << std::endl;
+		// if s is NOT empty AND end has Not be found yet, keep searching!
+		if (!s.empty() && !endFound)
 		{
-			int cell = q.front();
+			// current
+			int cell = s.top();
 			int r0 = m_Grid->getCellCoord(cell).first;
 			int c0 = m_Grid->getCellCoord(cell).second;
-			q.pop();
+			s.pop();
 			m_Grid->setCellState(r0, c0, cellState::VISITED);
 			// iterate every neighbor
 			for (int i = 0; i < 4; i++)
@@ -42,13 +43,13 @@ namespace Algorithms
 				parentHash[m_Grid->getCellID(r, c)] = { r0, c0 };
 				// Check if this new cell is the end point
 				if (m_Grid->getCellType(r, c) == cellType::END)
-				{	
+				{
 					InitPath(cell);
 					endFound = true;
 					break;
 				}
 				else { // just a normal node
-					q.push(m_Grid->getCellID(r, c));
+					s.push(m_Grid->getCellID(r, c));
 				}
 			}
 			return true; // Algorithm continues runnint
@@ -58,7 +59,7 @@ namespace Algorithms
 		return PathUpdate();
 	}
 
-	bool BFS::PathUpdate()
+	bool DFS::PathUpdate()
 	{
 		if (!endFound) return false;
 		if (m_Grid->getCellType(currCell) != cellType::START)
@@ -67,17 +68,17 @@ namespace Algorithms
 			currCell = m_Grid->getCellID(parentHash[currCell].first, parentHash[currCell].second);
 			//sleep_for(0.03s);
 			return true;
-		}	
+		}
 		return false;
 	}
-	void BFS::InitPath(int parentCell)
+	void DFS::InitPath(int parentCell)
 	{
 		currCell = parentCell;
 	}
 
-	void BFS::Reset()
+	void DFS::Reset()
 	{
-		q = {};
+		s = {};
 		endFound = false;
 		parentHash.clear();
 	}
