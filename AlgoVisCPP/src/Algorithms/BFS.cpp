@@ -17,6 +17,7 @@ namespace Algorithms
 	bool BFS::Update()
 	{
 		std::cout << "RUNNING BFS ALGO..." << std::endl;
+		std::cout << "Search Type: " << m_numSearchDirections << std::endl;
 		// if q is NOT empty AND end has Not be found yet, keep searching!
 		if (!q.empty() && !endFound) 
 		{
@@ -26,11 +27,14 @@ namespace Algorithms
 			q.pop();
 			m_Grid->setCellState(r0, c0, cellState::VISITED);
 			// iterate every neighbor
-			for (int i = 0; i < 4; i++)
+			for (int i = 0; i < m_numSearchDirections; i++)
 			{
-				// First and Formost, draw the grid
 				int r = r0 + dr4[i];
 				int c = c0 + dc4[i];
+				if (m_numSearchDirections == 8) {
+					r = r0 + dr8[i];
+					c = c0 + dc8[i];
+				}
 				// boundary check
 				if (r < 0 || c < 0 || r >= m_Grid->getHeight() || c >= m_Grid->getWidth()) { continue; }
 				// skip wall cells

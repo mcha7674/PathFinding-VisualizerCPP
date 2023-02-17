@@ -23,15 +23,15 @@ void AlgoVis::Init()
 	m_CameraController = std::make_shared<GLCore::Utils::OrthographicCameraController>
 		((float)Application::Get().GetWindow().GetWidth() / (float)Application::Get().GetWindow().GetHeight(), false, 1.0f);
 	// Init Layout
-	layout = std::make_unique<Layout>(Application::Get().GetWindow().GetWidth(),
+	layout = std::make_shared<Layout>(Application::Get().GetWindow().GetWidth(),
 		Application::Get().GetWindow().GetHeight(), m_CameraController);
-	layout->setCoordSys(30); // Set Height and Width for our coordinate system originating from (0,0)
+	layout->setCoordSys(20); // Set Height and Width for our coordinate system originating from (0,0)
 	// Init Grid //
 	grid = std::make_shared<Grid>(layout->uiAdjustedGridHeight(),
 		layout->getCoordSysDim(), m_CameraController->GetCamera().GetViewProjectionMatrix());
 	grid->setGridColor(0.0f, 0.0f, 0.0f);
 	// Initiate Current Algorithm //
-	currAlgo = std::make_shared<Algorithms::BFS>(grid);
+	currAlgo = std::make_shared<Algorithms::BFS>(grid, progState.numSearchDirections);
 	// Init UI //
 	ui = std::make_unique<UI>(m_CameraController);
 }
@@ -172,12 +172,13 @@ void AlgoVis::OnUpdate(Timestep ts)
 /*  UI IMGUI Render Layer  */
 void AlgoVis::OnImGuiRender()
 {
-	std::cout << "IN IMGUI RENDER" << std::endl;
 	ui->UpdateWorkSize();
 	// Start and Reset Buttons
 	ui->StartAndResets(progState, currAlgo, grid);
 	// Sets the Current Algorithm through polymorphism
-	ui->AlgoChoices(currAlgo, grid);
+	ui->AlgoChoices(progState, currAlgo, grid);
+	// Sets The Toggle Radio Buttons
+	ui->Toggles(layout, progState, currAlgo, grid);
 	// Shows the current status of the user.
 	ui->Status(progState.status);
 	ui->HelpMenu();
@@ -213,7 +214,6 @@ void AlgoVis::VisReset()
 	grid->reset();
 	// Reset Program States
 	progState.Reset();
-	std::cout << "Reset Application" << std::endl;
 }
 bool AlgoVis::isMouseOnGrid()
 {
@@ -232,7 +232,7 @@ void AlgoVis::transformMousePos(float const scrMouseX, float const scrMouseY)
 		(scrMouseX / layout->getScrWidth()));
 	progState.mouseY = ((layout->getCoordSysDim()) -
 		((layout->getCoordSysDim()) * (scrMouseY / layout->getScrHeight())));
-	//std::cout << "Transformed Mouse Coords of (" << progState.mouseX << ", " << progState.mouseY << ")" << std::endl;
+	std::cout << "Transformed Mouse Coords of (" << progState.mouseX << ", " << progState.mouseY << ")" << std::endl;
 }
 
 

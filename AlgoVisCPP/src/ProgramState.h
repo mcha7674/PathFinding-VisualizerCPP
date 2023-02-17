@@ -16,6 +16,9 @@ struct ProgState {
 	bool isAlgoRunning;
 	// Status Field
 	std::string status;
+	// Is the algorithm searching 4ways or 8 ways?
+	int numSearchDirections;
+	// Grid Changed State
 	ProgState() {
 		Reset();
 	}
@@ -23,7 +26,7 @@ struct ProgState {
 		mouseX = mouseY = 0;
 		speed = 1;
 		mouseBPressed = isAlgoRunning = false;
-		status = "";
-		
+		status = "Welcome To Pathfinding Vis!";
+		numSearchDirections = 4;
 	}
 };

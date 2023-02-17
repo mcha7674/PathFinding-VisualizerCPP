@@ -13,8 +13,6 @@ namespace Algorithms
 	using namespace std::chrono_literals;
 	using std::chrono::system_clock;
 
-	enum class SearchType {FOURWAY = 1, EIGHTWAY};
-
 	class PathFinder 
 	{
 	public:
@@ -22,12 +20,15 @@ namespace Algorithms
 		virtual bool Update() = 0;
 		virtual bool PathUpdate() = 0;
 		// Initializers
-		virtual inline void Init(std::pair<int, int> start) {m_Start = start; endFound = false; parentHash.clear();}
+		virtual inline void Init(std::pair<int, int> start) { 
+			m_Start = start; endFound = false; parentHash.clear(); 
+		}
 		virtual inline void InitPath(int parentCell) { currCell = parentCell; }
 		// Getters
 		virtual inline std::string getName() { return Name; }
 		virtual inline bool getEndState() { return endFound; }
-		virtual inline SearchType getSearchType() { return searchType; }
+		// Setters
+		virtual inline void setNumSearchDirections(int num) {m_numSearchDirections = num; }
 	protected:
 		// Every Algo Has A Name
 		std::string Name;
@@ -39,8 +40,7 @@ namespace Algorithms
 		int currCell; 
 		// A Hash table that Stores the Cell ID With its Parent Cell's Coordinate
 		std::unordered_map<int, std::pair<int, int>> parentHash;
-		// Search Type and that type's coordinate Arrays
-		SearchType searchType;
+		int m_numSearchDirections;
 		static constexpr const int dr4[4] = { 0, 1, 0, -1 };
 		static constexpr const int dc4[4] = { 1, 0, -1, 0 };
 		static constexpr const int dr8[8] = { 1, 1, 0, -1, -1, -1, 0, 1 };

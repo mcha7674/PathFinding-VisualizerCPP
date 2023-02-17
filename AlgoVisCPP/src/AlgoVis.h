@@ -35,7 +35,7 @@ private:
 	// Program State
 	ProgState progState;
 	// Layout //
-	std::unique_ptr<Layout> layout;
+	std::shared_ptr<Layout> layout;
 	// The Grid //
 	std::shared_ptr<Grid> grid;
 	// Algorithm //
