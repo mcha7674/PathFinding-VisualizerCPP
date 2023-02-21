@@ -36,6 +36,7 @@ private:
 	ProgState progState;
 	// Layout //
 	std::shared_ptr<Layout> layout;
+	Color colors;
 	// The Grid //
 	std::shared_ptr<Grid> grid;
 	// Algorithm //

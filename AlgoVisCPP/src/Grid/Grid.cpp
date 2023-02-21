@@ -3,6 +3,11 @@
 Grid::Grid(int row, int col, glm::mat4 ViewProjMatrix)
 {
 	Init(row, col, ViewProjMatrix);
+	// Init Grid FIll Quad params
+	fillQuad.trans.setScale({ 0.95f,0.95f,0.0f });
+	XQuadOffset = 0.016;
+	YQuadOffset = 0.024;
+	fillVisitSpeed = 0.01f;
 }
 
 void Grid::Init(int row, int col, glm::mat4 ViewProjMatrix)
@@ -24,53 +29,71 @@ void Grid::Init(int row, int col, glm::mat4 ViewProjMatrix)
 	}
 }
 
-void Grid::RenderGrid()
+void Grid::RenderGrid(bool& isAlgoRunning)
 {
 	fillQuad.quad_shader->use();
 	fillQuad.quad_shader->SetUniformMatrix4fv("viewProjection", ViewProjectionMatrix);
+	glm::vec4 chosenFillColor = { 0.0f,0.0f,0.0f,0.0f };
+	// Fading out of visited/visiting cells
+	if (!isAlgoRunning) {
+		if (colors.VisitedCell.w >= 0.0f) colors.VisitedCell.w -= fillVisitSpeed;
+		if (colors.VisitingCell.w >= 0.0f) { colors.VisitingCell.w -= fillVisitSpeed; }
+	}
+	else { colors.VisitedCell.w = colors.VisitingCell.w = 1.0f; }
 	// Only Execute code below if both start and Endpoint has been set and algorithm chosen
-	for (int i = 0; i < getHeight(); i++) {
-		for (int j = 0; j < getWidth(); j++) {
+	for (int i = 0; i < getHeight(); i++) 
+	{
+		for (int j = 0; j < getWidth(); j++) 
+		{
+			bool fill = true;
 			// Check if start and end, if so, render colored cell
 			if (getCellType(i, j) == cellType::START) {
-				fillQuad.setColor(0.0f, 1.0f, 0.0f, 1.0f);
-				fillQuad.trans.setPosition({ (float)j, (float)i, 0.0f });
-				renderer.DrawRect(fillQuad.va, *(fillQuad.ib), *(fillQuad.quad_shader), fillQuad.trans);
+				chosenFillColor = colors.StartCell;
 			}
 			else if (getCellType(i, j) == cellType::END) {
-				fillQuad.setColor(1.0f, 0.0f, 0.0f, 1.0f);
-				fillQuad.trans.setPosition({ (float)j, (float)i, 0.0f });
-				renderer.DrawRect(fillQuad.va, *(fillQuad.ib), *(fillQuad.quad_shader), fillQuad.trans);
+				chosenFillColor = colors.EndCell;
 			}
 			else if (getCellType(i, j) == cellType::WALL) {
-				fillQuad.setColor(0.0f, 0.0f, 0.0f, 1.0f);
-				fillQuad.trans.setPosition({ (float)j, (float)i, 0.0f });
-				renderer.DrawRect(fillQuad.va, *(fillQuad.ib), *(fillQuad.quad_shader), fillQuad.trans);
+				chosenFillColor = colors.WallCell;
 			}
 			else if (getCellType(i, j) == cellType::PATH) {
-				fillQuad.setColor(1.0f, 1.0f, 0.0f, 1.0f);
-				fillQuad.trans.setPosition({ (float)j, (float)i, 0.0f });
-				renderer.DrawRect(fillQuad.va, *(fillQuad.ib), *(fillQuad.quad_shader), fillQuad.trans);
+				chosenFillColor = colors.PathCell;
 			}
 			else {
 				switch (getCellState(i, j))
 				{
 				case cellState::VISITING: // Visiting will always be set first
-					fillQuad.setColor(0.0f, 1.0f, 1.0f, 1.0f);
-					fillQuad.trans.setPosition({ (float)j, (float)i, 0.0f });
-					renderer.DrawRect(fillQuad.va, *(fillQuad.ib), *(fillQuad.quad_shader), fillQuad.trans);
+					// Cause Color to fade after algorithm is finished
+					chosenFillColor = colors.VisitingCell;
 					break;
 				case cellState::VISITED:
-					fillQuad.setColor(0.3f, 0.3f, 1.0f, 0.8f);
-					fillQuad.trans.setPosition({ (float)j, (float)i, 0.0f });
-					renderer.DrawRect(fillQuad.va, *(fillQuad.ib), *(fillQuad.quad_shader), fillQuad.trans);
+					chosenFillColor = colors.VisitedCell;
 					break;
 				case cellState::UNVISITED: // if unvisited, no need to render a quad.
+					if (getCellType(i, j) == cellType::NORMAL) {
+						// Draw Weighted Normal Cells
+						if (getCellWeight(i, j) > 1) {
+							// Set limits - implement oncec color class is implemented
+							glm::vec4 colorWeight = {
+								colors.WeightedCell.x - (getCellWeight(i, j) * 5) / 255.0f,
+								colors.WeightedCell.y - (getCellWeight(i, j) * 5) / 255.0f,
+								colors.WeightedCell.z - (getCellWeight(i, j) * 5) / 255.0f,
+								colors.WeightedCell.w
+							};
+							chosenFillColor = colorWeight;
+						}
+						else fill = false;
+					}
+					break;
 				default:
 					break;
 				}
 			}
-
+			if (fill) {
+				fillQuad.setColor(chosenFillColor);
+				fillQuad.trans.setPosition({ (float)j + XQuadOffset, (float)i + YQuadOffset, 0.0f });
+				renderer.DrawRect(fillQuad.va, *(fillQuad.ib), *(fillQuad.quad_shader), fillQuad.trans);
+			}	
 		}
 	}
 }
@@ -93,6 +116,10 @@ void Grid::RenderGridLines()
 		transH.setPosition({ 0.0f, (float)y, 0.0f });
 		renderer.DrawLineStrip(*(gridRender.getVA()), *(gridRender.getShader()), transH, gridRender.vertexCount());
 	}
+}
+void Grid::addCellWeight(int row, int col, int addAmount) 
+{ 
+	grid[row][col].weight += addAmount; 
 }
 
 void Grid::setCellState(int row, int col, cellState state)
@@ -173,14 +200,22 @@ void Grid::reset()
 		}
 	}
 }
+void Grid::resetWeights()
+{
+	for (int i = 0; i < gridProps->height; i++) {
+		for (int j = 0; j < gridProps->width; j++) {
+			grid[i][j].weight = 1;
+		}
+	}
+}
 
 void Grid::setGridColor(float r, float g, float b, float a)
 {
 	gridRender.getShader()->use();
 	gridRender.getShader()->SetUniformVec4fv("u_Color", glm::vec4(r, g, b, a));
 }
-void Grid::setGridColor(glm::vec3 rgb)
+void Grid::setGridColor(glm::vec4 rgba)
 {
 	gridRender.getShader()->use();
-	gridRender.getShader()->SetUniformVec4fv("u_Color", glm::vec4(rgb, 1.0f));
+	gridRender.getShader()->SetUniformVec4fv("u_Color", rgba);
 }

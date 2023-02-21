@@ -5,7 +5,7 @@
 #include <vector>
 #include "../Base_Models/Quad.h"
 #include "GridRender.h"
-
+#include "../Color.h"
 
 enum class cellState { VISITED = 0, UNVISITED, VISITING };
 enum class cellType { NORMAL = 0, START, END, WALL, PATH };
@@ -16,7 +16,7 @@ struct Cell
 	Cell() { reset(); }
 	void reset()
 	{
-		weight = 0;
+		weight = 1;
 		m_State = cellState::UNVISITED;
 		m_Type = cellType::NORMAL;
 	}
@@ -54,6 +54,7 @@ public:
 	void clearBoard();
 	void clearPath();
 	void reset();
+	void resetWeights();
 	// Getters
 	inline Cell getCell(int r, int c) { return grid[r][c]; }
 	inline Cell getCell(std::pair<int,int> coord) { return grid[coord.first][coord.second]; }
@@ -61,6 +62,7 @@ public:
 	inline cellType getCellType(int r, int c) { return grid[r][c].m_Type; }
 	inline cellType getCellType(std::pair<int, int> coord) { return grid[coord.first][coord.second].m_Type; }
 	inline cellState getCellState(int r, int c) { return grid[r][c].m_State; }
+	inline int getCellWeight(int r, int c) { return grid[r][c].weight; }
 
 	inline int getCellID(int r, int c) { return grid[r][c].ID; }
 	inline std::pair<int, int> getCellCoord(int ID) { return cellHash[ID]; }
@@ -72,16 +74,17 @@ public:
 	// Setters
 	void setCellState(int row, int col, cellState state);
 	void setCellType(int row, int col, cellType type);
+	void addCellWeight(int row, int col, int newWeight);
 	inline void setGrid(std::vector<std::vector<Cell>> GRID) { grid = GRID; };
 	// States //
 	bool isStartSet() { return (gridProps->startPointSet); }
 	bool isEndSet() { return (gridProps->endPointSet); }
 	bool isStartAndEndSet() { return (gridProps->startPointSet && gridProps->endPointSet); }
 	// Render Grid
-	void RenderGrid();
+	void RenderGrid(bool &isAlgoRunning);
 	void RenderGridLines();
 	void setGridColor(float r, float g, float b, float a = 1.0f);
-	void setGridColor(glm::vec3 color);
+	void setGridColor(glm::vec4 rgba);
 private:
 	std::shared_ptr<GridProps> gridProps;
 	std::vector<std::vector<Cell>> grid;
@@ -89,8 +92,12 @@ private:
 	// Rendering
 	GridRender gridRender;
 	Renderer renderer;
-	Quad fillQuad;
 	glm::mat4 ViewProjectionMatrix;
+	Color colors;
+	Quad fillQuad;
+	float fillVisitSpeed;
+	float XQuadOffset;
+	float YQuadOffset;
 };
 
 

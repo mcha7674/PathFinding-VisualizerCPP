@@ -11,7 +11,10 @@ AlgoVis::AlgoVis()
 void AlgoVis::OnAttach()
 {   // AlgoVis's gl prelims 
 	EnableGLDebugging();
-	//glEnable(GL_LINE_SMOOTH);
+	// Enable Alpha
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_BLEND);
+	glEnable(GL_LINE_SMOOTH);
 }
 void AlgoVis::OnDetach()
 {
@@ -29,7 +32,7 @@ void AlgoVis::Init()
 	// Init Grid //
 	grid = std::make_shared<Grid>(layout->uiAdjustedGridHeight(),
 		layout->getCoordSysDim(), m_CameraController->GetCamera().GetViewProjectionMatrix());
-	grid->setGridColor(0.0f, 0.0f, 0.0f);
+	grid->setGridColor(colors.GridLines);
 	// Initiate Current Algorithm //
 	currAlgo = std::make_shared<Algorithms::BFS>(grid, progState.numSearchDirections);
 	// Init UI //
@@ -61,7 +64,9 @@ void AlgoVis::OnEvent(Event& event)
 	dispatcher.Dispatch<MouseButtonReleasedEvent>(
 		[&](MouseButtonReleasedEvent& e) {
 			if (e.GetMouseButton() == MOUSE_BUTTON_1)
-				progState.mouseBPressed = false;
+				progState.mouseB1Pressed = false;
+			else if(e.GetMouseButton() == MOUSE_BUTTON_2)
+				progState.mouseB2Pressed = false;
 			return true; // event handled
 		});
 
@@ -113,9 +118,9 @@ void AlgoVis::OnEvent(Event& event)
 	// The following events are only for events WITHIN GRID BOUNDARY //
 	if (isMouseOnGrid() && !progState.isAlgoRunning)
 	{
-		//std::cout << "Mouse On Cell: (" << progState.mouseX << ", " << progState.mouseY << ")" << std::endl;
 		int row = progState.mouseY;
 		int col = progState.mouseX;
+		// Start and End Node Placement
 		dispatcher.Dispatch<MouseButtonReleasedEvent>(
 			[&](MouseButtonReleasedEvent& e) {
 				if (e.GetMouseButton() == MOUSE_BUTTON_1) {
@@ -126,28 +131,39 @@ void AlgoVis::OnEvent(Event& event)
 					} else if (!grid->isEndSet()) { // If grid end point not set yet, Next button release is end point
 						grid->setCellType(row, col, cellType::END);
 					}
-					InitAlgo();
 				}
+				InitAlgo();
 				return true; // event handled
 			});
+		// wall and weights placecment
 		dispatcher.Dispatch<MouseButtonPressedEvent>(
 			[&](MouseButtonPressedEvent& e) {
 				if (e.GetMouseButton() == MOUSE_BUTTON_1) {
 					// set to true, so that program recognizes if I am HOLDING DOWN the mouse button as I move.
-					progState.mouseBPressed = true; 
-					if (grid->isStartAndEndSet() && progState.mouseBPressed) {
+					progState.mouseB1Pressed = true; 
+					if (grid->isStartAndEndSet() && progState.mouseB1Pressed) {
 						if (grid->getCellType(row, col) != cellType::WALL)
 							grid->setCellType(row, col, cellType::WALL);
 						else grid->setCellType(row, col, cellType::NORMAL);
 					}
 				}
+				else if (e.GetMouseButton() == MOUSE_BUTTON_2) {
+					progState.mouseB2Pressed = true;
+					if (grid->isStartAndEndSet() && progState.mouseB2Pressed) {
+						grid->addCellWeight(row, col, 1);
+					}
+				}
 				return true;
 			});
+		// Wall and Weights Placement
 		dispatcher.Dispatch<MouseMovedEvent>(
 			[&](MouseMovedEvent& e) {
 				// while the button is pressed and start and end point already set, place down walls!
-				if (grid->isStartAndEndSet() && progState.mouseBPressed) {
+				if (grid->isStartAndEndSet() && progState.mouseB1Pressed) {
 					grid->setCellType(row, col, cellType::WALL);
+				}
+				if (grid->isStartAndEndSet() && progState.mouseB2Pressed) {
+					grid->addCellWeight(row, col, 1);
 				}
 				return true;
 			});
@@ -157,9 +173,12 @@ void AlgoVis::OnEvent(Event& event)
 ////////// Game Loop Layer /////////////
 void AlgoVis::OnUpdate(Timestep ts)
 {
-	// Window Clearing and pause functions 
-	Application::Get().GetWindow().Clear(241.0f /255.0f, 240.0f /255.0f, 255.0f /255.0f, 1.0f);
-	renderer.Clear(true);
+	// Clear Window
+	Application::Get().GetWindow().Clear(colors.Background.x, colors.Background.y, 
+										 colors.Background.z, colors.Background.w);
+	// Clear Color Buffer - Parameter is to enable depth buffer clearing or not
+	renderer.Clear(false);
+	// Main AlgoVisualizer Update Section
 	grid->RenderGridLines();
 	// Execute each Step of the Chosen Algorithm //
 	if (progState.isAlgoRunning) {
@@ -167,7 +186,7 @@ void AlgoVis::OnUpdate(Timestep ts)
 			progState.isAlgoRunning = currAlgo->Update();
 		}
 	}
-	grid->RenderGrid(); 
+	grid->RenderGrid(progState.isAlgoRunning); 
 }
 /*  UI IMGUI Render Layer  */
 void AlgoVis::OnImGuiRender()
@@ -198,7 +217,7 @@ void AlgoVis::InitAlgo()
 void AlgoVis::changeCoordSysSize(int numToAdd)
 {
 	if (layout->getCoordSysDim() <= 10 && numToAdd < 0) 
-	{ layout->setCoordSys(5); std::cout << "Cannot Change Size Further!!" << std::endl; }
+	{ layout->setCoordSys(10); std::cout << "Cannot Change Size Further!!" << std::endl; }
 	else if (layout->getCoordSysDim() >= 100 && numToAdd > 0) 
 	{ layout->setCoordSys(100); std::cout << "Cannot Change Size Further!!" << std::endl; }
 	else {

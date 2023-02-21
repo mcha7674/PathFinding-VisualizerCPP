@@ -55,24 +55,31 @@ void UI::StartAndResets(ProgState &progState, std::shared_ptr<Algorithms::PathFi
         ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
     ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(20, 20, 100, 1));
     ImGui::SetNextWindowBgAlpha(0.0f); // Transparent background
-    ImGui::SetNextWindowPos(ImVec2((work_pos.x + work_size.x) *0.5, work_pos.y), ImGuiCond_Always, ImVec2(0.5f, 0.0f));
+    ImGui::SetNextWindowPos(ImVec2((work_pos.x + work_size.x) *0.5, work_pos.y-5), ImGuiCond_Always, ImVec2(0.5f, 0.0f));
     if (ImGui::Begin("Buttons", NULL, window_flags)) {
     	ImGui::SetWindowFontScale(1.8f);
     	if (ImGui::Button("Clear Path") && !progState.isAlgoRunning)
     	{	// Reset App
             grid->clearPath();
-            currAlgo->Init(grid->getStartCoord());
+            if (grid->isStartAndEndSet())
+                currAlgo->Init(grid->getStartCoord());
         }ImGui::SameLine();
         if (ImGui::Button("Clear Board") && !progState.isAlgoRunning)
         {	// Reset App
             grid->clearBoard();
-            currAlgo->Init(grid->getStartCoord());
-        }ImGui::SameLine();
+            if (grid->isStartAndEndSet())
+                currAlgo->Init(grid->getStartCoord());
+        }
+        if (ImGui::Button("Reset Weights") && !progState.isAlgoRunning)
+        {	// Reset App
+            grid->resetWeights();
+        } ImGui::SameLine(0, 45);
         if (ImGui::Button("Reset") && !progState.isAlgoRunning)
         {	// Reset App
             grid->reset();
-        } ImGui::SameLine(); ImGui::Dummy(ImVec2(0, ImGui::GetWindowHeight()/2 - 5));
+        }  
         ImGui::Dummy(ImVec2(ImGui::GetWindowWidth() / 3, 0)); ImGui::SameLine();
+        // Reset Weights Button
         // Start/ Pause Button
         static char* buttonName = "Start";
         if (progState.isAlgoRunning) { buttonName = "Pause"; }
@@ -95,7 +102,7 @@ void UI::StartAndResets(ProgState &progState, std::shared_ptr<Algorithms::PathFi
 
 void UI::AlgoChoices(ProgState& progState, std::shared_ptr<Algorithms::PathFinder> &currAlgo, std::shared_ptr<Grid> grid)
 {
-    const char* algos[] = {"  \tBFS", "  \tDFS", "  \tAStar", "\tDijkstra" };
+    const char* algos[] = {"  \tBFS", "  \tDFS", "\tDijkstra", "  \tAStar" };
     static const char* current_item = algos[0];
     static ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize |
         ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
@@ -121,7 +128,10 @@ void UI::AlgoChoices(ProgState& progState, std::shared_ptr<Algorithms::PathFinde
                     else if (n == 1) {
                         currAlgo.reset(new Algorithms::DFS(grid, progState.numSearchDirections));
                     }
-                    else if (n == 2) std::cout << "ASTAR NOT IMPEMENTED YET" << std::endl;;
+                    else if (n == 2) {
+                        currAlgo.reset(new Algorithms::Dijkstra(grid, progState.numSearchDirections));
+                    }
+                   
                     // Initiate the chosen algorithm
                     if (grid->isStartAndEndSet()) {
                         grid->clearPath(); // clear the last path as we are executing again
@@ -141,7 +151,7 @@ void UI::Status(std::string status)
     static ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize |
         ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
     ImGui::SetNextWindowBgAlpha(0.1f); // Transparent background
-    ImGui::SetNextWindowPos(ImVec2((work_pos.x+work_size.x)*0.5, work_pos.y+115), ImGuiCond_Always, ImVec2(0.5f, 0.0f));
+    ImGui::SetNextWindowPos(ImVec2((work_pos.x+work_size.x)*0.5, work_pos.y+120), ImGuiCond_Always, ImVec2(0.5f, 0.0f));
     ImGui::SetNextWindowSize(ImVec2(390, 90));
     if (ImGui::Begin("Status", NULL, window_flags)) 
     {
@@ -225,7 +235,7 @@ void UI::HelpMenu()
 {
     static ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize |
         ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
-    window_flags = ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove;
+    window_flags = ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoSavedSettings ;
     ImGui::SetNextWindowBgAlpha(0.9f); // Transparent background
     ImGui::SetNextWindowPos(ImVec2((work_pos.x + work_size.x), work_pos.y + 0), ImGuiCond_Always, ImVec2(1.0f, 0.0f));
     ImGui::SetNextWindowSize(ImVec2(250, 195));
@@ -233,7 +243,12 @@ void UI::HelpMenu()
     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(255, 255, 255, 1));
     style->WindowTitleAlign = ImVec2(0.5, 0.5);
     ImGui::Begin("Help Menu", NULL, window_flags);
-        ImGui::SetWindowFontScale(1.3f);
+        ImGui::SetWindowFontScale(1.2f);
+        ImGui::TextWrapped("\t\tInstructions:"); 
+        ImGui::TextWrapped("Left click to place Start, End, and Wall cells.");
+        ImGui::TextWrapped("Right click to place down weights.");
+        ImGui::TextWrapped("Increase the weight by right clicking multiple times on a cell");
+        ImGui::TextWrapped("\t\tKey Bindings:"); 
         ImGui::TextWrapped("Change Grid Size:\n\tUP/DOWN Arrow Keys");
         ImGui::TextWrapped("Change Algorithm Speed:\n\tLEFT/RIGHT Arrow Keys");
         ImGui::TextWrapped("Start/Pause Algorithm:\n\tSPACE BAR");

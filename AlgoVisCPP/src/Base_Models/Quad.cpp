@@ -38,3 +38,9 @@ void Quad::setColor(float r, float g, float b, float a)
     quad_shader->use();
     quad_shader->SetUniformVec4fv("u_Color", glm::vec4(r, g, b, a));
 }
+void Quad::setColor(glm::vec4 color)
+{
+    // Color values should be normalized
+    quad_shader->use();
+    quad_shader->SetUniformVec4fv("u_Color", color);
+}

@@ -26,6 +26,7 @@ struct Quad
     Texture* texture;
 
     void setColor(float r, float g, float b, float a);
+    void setColor(glm::vec4 color);
 
     /* VAO VB and VB Layout */
     VertexArray va; // (GenVertexArray)
