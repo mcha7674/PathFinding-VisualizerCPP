@@ -1,2 +1,2 @@
-# C++ Algorithm Visualizer
-Focuses Primarily on path finding and sorting algorithms
+# C++ Pathfinding Algorithm Visualizer
+Focuses Primarily on path finding Algorithms
