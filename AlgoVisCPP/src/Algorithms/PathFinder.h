@@ -13,6 +13,7 @@ namespace Algorithms
 	using namespace std::chrono_literals;
 	using std::chrono::system_clock;
 
+	
 	class PathFinder 
 	{
 	public:
@@ -21,7 +22,7 @@ namespace Algorithms
 		virtual bool PathUpdate() = 0;
 		// Initializers
 		virtual inline void Init(std::pair<int, int> start) { 
-			m_Start = start; endFound = false; parentHash.clear(); 
+			m_Start = start; endFound = false; parentHash.clear();
 		}
 		virtual inline void InitPath(int parentCell) { currCell = parentCell; }
 		// Getters

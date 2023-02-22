@@ -131,6 +131,9 @@ void UI::AlgoChoices(ProgState& progState, std::shared_ptr<Algorithms::PathFinde
                     else if (n == 2) {
                         currAlgo.reset(new Algorithms::Dijkstra(grid, progState.numSearchDirections));
                     }
+                    else if (n == 3) {
+                        currAlgo.reset(new Algorithms::Astar(grid, progState.numSearchDirections));
+                    }
                    
                     // Initiate the chosen algorithm
                     if (grid->isStartAndEndSet()) {

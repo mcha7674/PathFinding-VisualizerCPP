@@ -28,7 +28,7 @@ struct ProgState {
 		mouseX = mouseY = 0;
 		speed = 1;
 		mouseB1Pressed = mouseB2Pressed = isAlgoRunning = false;
-		status = "Welcome To Pathfinding Vis!";
+		status = "Welcome To Pathfinding Vis! \tSet your start and end points and select an algorithm!";
 		numSearchDirections = 4;
 	}
 };

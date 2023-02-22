@@ -36,8 +36,8 @@ void Grid::RenderGrid(bool& isAlgoRunning)
 	glm::vec4 chosenFillColor = { 0.0f,0.0f,0.0f,0.0f };
 	// Fading out of visited/visiting cells
 	if (!isAlgoRunning) {
-		if (colors.VisitedCell.w >= 0.0f) colors.VisitedCell.w -= fillVisitSpeed;
-		if (colors.VisitingCell.w >= 0.0f) { colors.VisitingCell.w -= fillVisitSpeed; }
+		if (colors.VisitedCell.w >= 0.4f) colors.VisitedCell.w -= fillVisitSpeed;
+		if (colors.VisitingCell.w >= 0.4f) { colors.VisitingCell.w -= fillVisitSpeed; }
 	}
 	else { colors.VisitedCell.w = colors.VisitingCell.w = 1.0f; }
 	// Only Execute code below if both start and Endpoint has been set and algorithm chosen

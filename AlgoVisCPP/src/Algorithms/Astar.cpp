@@ -1,30 +1,45 @@
-
-#include "BFS.h"
+#include "Astar.h"
 
 namespace Algorithms
 {
+
+	int Astar::EuclidHeuristic(int r, int c)
+	{
+		int endR = endCoord.first;
+		int endC = endCoord.second;
+		// Euclidean distance Heuristic
+		return (int)sqrt(pow(endR - r,2) + pow(endC - c,2));
+	}
+	
 	// Init 
-	void BFS::Init(std::pair<int, int> start)
+	void Astar::Init(std::pair<int, int> start)
 	{
 		// start clean
 		PathFinder::Init(start);
+		// costs hash
+		Gcost.clear();
 		// Clear Previous Queue if Any
-		q = {};
+		minQ = {};
 		// push Cell ID
-		q.push(m_Grid->getCellID(m_Start.first, m_Start.second));
+		minQ.push({ m_Grid->getCellID(start.first, start.second), std::make_pair(0, 0)});
+		// Init Hash with initial distance of zero for the start node
+		Gcost[minQ.top().first] = 0;
+		// Initialize Coords
+		startCoord = m_Grid->getStartCoord();
+		endCoord = m_Grid->getEndCoord();
 	}
+	
 	// Update 
-	bool BFS::Update()
+	bool Astar::Update()
 	{
-		std::cout << "RUNNING BFS ALGO..." << std::endl;
-		std::cout << "Search Type: " << m_numSearchDirections << std::endl;
+		std::cout << "RUNNING Astar ALGO..." << std::endl;
 		// if q is NOT empty AND end has Not be found yet, keep searching!
-		if (!q.empty() && !endFound) 
+		if (!minQ.empty() && !endFound)
 		{
-			int cell = q.front();
+			int cell = minQ.top().first;
 			int r0 = m_Grid->getCellCoord(cell).first;
 			int c0 = m_Grid->getCellCoord(cell).second;
-			q.pop();
+			minQ.pop();
 			m_Grid->setCellState(r0, c0, cellState::VISITED);
 			// iterate every neighbor
 			for (int i = 0; i < m_numSearchDirections; i++)
@@ -39,31 +54,34 @@ namespace Algorithms
 				if (r < 0 || c < 0 || r >= m_Grid->getHeight() || c >= m_Grid->getWidth()) { continue; }
 				// skip wall cells
 				if (m_Grid->getCellType(r, c) == cellType::WALL) continue;
-				// skip visited cells
 				if (m_Grid->getCellState(r, c) == cellState::VISITED || m_Grid->getCellState(r, c) == cellState::VISITING) continue;
 				// set unvisited node as visiting
 				m_Grid->setCellState(r, c, cellState::VISITING);
 				// save nodes parent
 				parentHash[m_Grid->getCellID(r, c)] = { r0, c0 };
+				// Calculations
+				// update costs of this cell
+				int GCost = Gcost[cell] + m_Grid->getCellWeight(r, c);
+				int HCost = EuclidHeuristic(r, c);
+				int FCost = GCost + HCost;
+				Gcost[m_Grid->getCellID(r, c)] = GCost;
 				// Check if this new cell is the end point
 				if (m_Grid->getCellType(r, c) == cellType::END)
-				{	
+				{
 					InitPath(cell);
 					endFound = true;
 					break;
 				}
-				else { // just a normal node
-					q.push(m_Grid->getCellID(r, c));
-				}
+				minQ.push({ m_Grid->getCellID(r, c), std::make_pair(FCost, HCost) });
 			}
-			return true; // Algorithm continues runnint
+			return true; // Algorithm continues running
 		}
 		// Program only reaches this portion if End is found Or Queue was empty
 		// is path update returns true, it means we continue to update next frame
 		return PathUpdate();
 	}
 
-	bool BFS::PathUpdate()
+	bool Astar::PathUpdate()
 	{
 		if (!endFound) return false;
 		if (m_Grid->getCellType(currCell) != cellType::START)
@@ -71,7 +89,7 @@ namespace Algorithms
 			m_Grid->setCellType(m_Grid->getCellCoord(currCell).first, m_Grid->getCellCoord(currCell).second, cellType::PATH);
 			currCell = m_Grid->getCellID(parentHash[currCell].first, parentHash[currCell].second);
 			return true;
-		}	
+		}
 		return false;
 	}
 

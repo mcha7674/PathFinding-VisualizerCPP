@@ -57,7 +57,7 @@ void AlgoVis::OnEvent(Event& event)
 	dispatcher.Dispatch<MouseMovedEvent>(
 		[&](MouseMovedEvent& e) { // Store Transformed (to coordinate System) Mouse Positions
 			// Transform Screen Coordinates to Grid Coordinates
-			std::cout << "Screen Mouse Coords of (" << e.GetX() << ", " << e.GetY() << ")" << std::endl;
+			//std::cout << "Screen Mouse Coords of (" << e.GetX() << ", " << e.GetY() << ")" << std::endl;
 			transformMousePos(e.GetX(), e.GetY());
 			return true;
 		});
@@ -74,7 +74,6 @@ void AlgoVis::OnEvent(Event& event)
 	// Key Bindings that Don't care if Algorithm is currently Running
 	dispatcher.Dispatch<KeyPressedEvent>(
 		[&](KeyPressedEvent& e) {
-			std::cout << "Pressed: (" << e.GetKeyCode() << ", " << e.GetName() << ")" << std::endl;
 			switch (e.GetKeyCode()) {
 			case KEY_RIGHT: // increase grid size by 5
 				progState.speed++;
@@ -185,6 +184,7 @@ void AlgoVis::OnUpdate(Timestep ts)
 		for (int i = 0; i < progState.speed; i++) {
 			progState.isAlgoRunning = currAlgo->Update();
 		}
+		//if (!progState.isAlgoRunning) { std::cout << "PATH LENGTH: " << currAlgo->getPathLength() << std::endl; }
 	}
 	grid->RenderGrid(progState.isAlgoRunning); 
 }
@@ -251,7 +251,7 @@ void AlgoVis::transformMousePos(float const scrMouseX, float const scrMouseY)
 		(scrMouseX / layout->getScrWidth()));
 	progState.mouseY = ((layout->getCoordSysDim()) -
 		((layout->getCoordSysDim()) * (scrMouseY / layout->getScrHeight())));
-	std::cout << "Transformed Mouse Coords of (" << progState.mouseX << ", " << progState.mouseY << ")" << std::endl;
+	//std::cout << "Transformed Mouse Coords of (" << progState.mouseX << ", " << progState.mouseY << ")" << std::endl;
 }
 
 
