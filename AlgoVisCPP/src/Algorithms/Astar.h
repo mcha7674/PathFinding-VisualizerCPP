@@ -12,7 +12,7 @@ namespace Algorithms
 	public:
 		bool operator()(std::pair<int, std::pair<int, int>> pair1, std::pair<int, std::pair<int, int>> pair2)
 		{
-			return  ((pair1.second.first + pair1.second.second) > (pair2.second.first + pair2.second.second));
+			return  ((pair1.second.first ) > (pair2.second.first ));
 		}
 	};
 
@@ -35,8 +35,7 @@ namespace Algorithms
 		int ManhattanHeuristic(int r, int c);
 	private:
 		// minimum priority queue - first element in pair is the Cell ID, the second element is {FCost, HCost}
-		std::priority_queue <std::pair<int, std::pair<int, int>>,
-			std::vector<std::pair<int, std::pair<int, int>>>, AstarCompare > minQ;
+		std::priority_queue <std::pair<int, int>, std::vector<std::pair<int, int>>, PairCompare > minQ;
 		std::shared_ptr<Grid> m_Grid;
 		std::unordered_map<int, int> Gcost; // cell id, cost
 		std::pair<int, int> startCoord;

@@ -14,8 +14,6 @@ namespace Algorithms
 	} 
 	bool DFS::Update()
 	{
-		std::cout << "RUNNING DFS ALGO..." << std::endl;
-		std::cout << "Search Type: " << m_numSearchDirections << std::endl;
 		// if s is NOT empty AND end has Not be found yet, keep searching!
 		if (!s.empty() && !endFound)
 		{
@@ -51,9 +49,7 @@ namespace Algorithms
 					endFound = true;
 					break;
 				}
-				else { // just a normal node
-					s.push(m_Grid->getCellID(r, c));
-				}
+				s.push(m_Grid->getCellID(r, c));
 			}
 			return true; // Algorithm continues runnint
 		}

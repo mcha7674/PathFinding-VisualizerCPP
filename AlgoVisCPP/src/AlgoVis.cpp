@@ -53,7 +53,6 @@ void AlgoVis::OnEvent(Event& event)
 			VisReset();
 			return true;
 		});
-	
 	dispatcher.Dispatch<MouseMovedEvent>(
 		[&](MouseMovedEvent& e) { // Store Transformed (to coordinate System) Mouse Positions
 			// Transform Screen Coordinates to Grid Coordinates
@@ -69,7 +68,6 @@ void AlgoVis::OnEvent(Event& event)
 				progState.mouseB2Pressed = false;
 			return true; // event handled
 		});
-
 	/* KEY BINDINGS */
 	// Key Bindings that Don't care if Algorithm is currently Running
 	dispatcher.Dispatch<KeyPressedEvent>(
@@ -111,7 +109,6 @@ void AlgoVis::OnEvent(Event& event)
 					break;
 				}
 			}
-			
 			return true; // event handled
 		});
 	// The following events are only for events WITHIN GRID BOUNDARY //

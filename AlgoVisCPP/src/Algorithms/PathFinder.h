@@ -13,7 +13,16 @@ namespace Algorithms
 	using namespace std::chrono_literals;
 	using std::chrono::system_clock;
 
-	
+	// For Using a Min Queue with a Pair
+	class PairCompare
+	{
+	public:
+		bool operator()(std::pair<int, int> pair1, std::pair<int, int> pair2)
+		{
+			return (pair1.second > pair2.second);
+		}
+	};
+
 	class PathFinder 
 	{
 	public:

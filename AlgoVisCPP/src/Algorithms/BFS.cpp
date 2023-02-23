@@ -16,8 +16,6 @@ namespace Algorithms
 	// Update 
 	bool BFS::Update()
 	{
-		std::cout << "RUNNING BFS ALGO..." << std::endl;
-		std::cout << "Search Type: " << m_numSearchDirections << std::endl;
 		// if q is NOT empty AND end has Not be found yet, keep searching!
 		if (!q.empty() && !endFound) 
 		{
@@ -52,9 +50,7 @@ namespace Algorithms
 					endFound = true;
 					break;
 				}
-				else { // just a normal node
-					q.push(m_Grid->getCellID(r, c));
-				}
+				q.push(m_Grid->getCellID(r, c));
 			}
 			return true; // Algorithm continues runnint
 		}

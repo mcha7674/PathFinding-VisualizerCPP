@@ -33,13 +33,14 @@ namespace Algorithms
 		PathFinder::Init(start);
 		// costs hash
 		Gcost.clear();
+		// fill cost hash with default gcost values for every cell
 		for (int id = 0; id < m_Grid->getHeight() * m_Grid->getWidth(); id++) {
 			Gcost[id] = INT_MAX;
 		}
 		// Clear Previous Queue if Any
 		minQ = {};
 		// push Cell ID
-		minQ.push({ m_Grid->getCellID(start.first, start.second), std::make_pair(0, 0)});
+		minQ.push({ m_Grid->getCellID(start.first, start.second), 0});
 		// Init Hash with initial distance of zero for the start node
 		Gcost[minQ.top().first] = 0;
 		// Initialize Coords
@@ -50,15 +51,16 @@ namespace Algorithms
 	// Update 
 	bool Astar::Update()
 	{
-		std::cout << "RUNNING Astar ALGO..." << std::endl;
 		// if q is NOT empty AND end has Not be found yet, keep searching!
 		if (!minQ.empty() && !endFound)
 		{
-			int cell = minQ.top().first;
-			int currGscore = Gcost[cell] + 1;
-			int r0 = m_Grid->getCellCoord(cell).first;
-			int c0 = m_Grid->getCellCoord(cell).second;
+			// grab cell id
+			int curr = minQ.top().first;
+			int currGscore = Gcost[curr] + 1; // add 1 because each move to another cell by default costs 1
+			int r0 = m_Grid->getCellCoord(curr).first;
+			int c0 = m_Grid->getCellCoord(curr).second;
 			minQ.pop();
+			// This cell is not a visited cell
 			m_Grid->setCellState(r0, c0, cellState::VISITED);
 			// iterate every neighbor
 			for (int i = 0; i < m_numSearchDirections; i++)
@@ -73,37 +75,30 @@ namespace Algorithms
 				if (r < 0 || c < 0 || r >= m_Grid->getHeight() || c >= m_Grid->getWidth()) { continue; }
 				// skip wall cells
 				if (m_Grid->getCellType(r, c) == cellType::WALL) continue;
-				//if (m_Grid->getCellState(r, c) == cellState::VISITED || m_Grid->getCellState(r, c) == cellState::VISITING) continue;
-				// 
-				/// Check if this new cell is the end point
+				// End Condition
 				if (m_Grid->getCellType(r, c) == cellType::END)
 				{
-					InitPath(cell);
+					InitPath(curr);
 					endFound = true;
 					break;
-				}
-				// set unvisited node as visiting
-				// save nodes parent
-				
-				// Calculations
-				// update costs of this cell
-				if (currGscore < Gcost[m_Grid->getCellID(r, c)]) {
+				} //
+				else if (currGscore < Gcost[m_Grid->getCellID(r, c)]) {
+					// mark this cell as a visiting cell!
 					m_Grid->setCellState(r, c, cellState::VISITING);
+					// update gscore of this neighbor cell, apply its weight if it has any
 					Gcost[m_Grid->getCellID(r, c)] = currGscore + m_Grid->getCellWeight(r, c);
 					int GCost = Gcost[m_Grid->getCellID(r, c)];
+					// calculate the heuristic
 					int HCost = 0;
-					if (m_numSearchDirections == 4) {
-						HCost = EuclidHeuristic(r, c);
-						//HCost = ManhattanHeuristic(r, c);
-					}
+					if (m_numSearchDirections == 4) { HCost = EuclidHeuristic(r, c); }
 					else { HCost = EuclidHeuristic(r, c); }
+					// Calculate the FCost
 					int FCost = GCost + HCost;
+					// Update the Parent of the neighbor to the current cell
 					parentHash[m_Grid->getCellID(r, c)] = { r0, c0 };
-					minQ.push({ m_Grid->getCellID(r, c), std::make_pair(FCost, HCost) });
+					// Add the neighbor to the priority queue
+					minQ.push({ m_Grid->getCellID(r, c), FCost });
 				}
-				
-				
-				
 			}
 			return true; // Algorithm continues running
 		}

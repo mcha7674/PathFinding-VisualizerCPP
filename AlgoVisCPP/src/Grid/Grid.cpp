@@ -204,7 +204,7 @@ void Grid::resetWeights()
 {
 	for (int i = 0; i < gridProps->height; i++) {
 		for (int j = 0; j < gridProps->width; j++) {
-			grid[i][j].weight = 1;
+			grid[i][j].weight = 0;
 		}
 	}
 }
