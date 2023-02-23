@@ -3,6 +3,7 @@ This is a grid pathfinding visualizer built using OpenGl, GLFW, GLAD, and ImGui.
 # Usage
 Only works on Windows. To use, clone or download this repo and go into the *scripts* folder.
 There is a windows batch file there that you can execute and it will build the Visual studio 2022 solution.
+The build is done using *premake*.
 ## Algorithms
 ### Breadth-First-Search (BFS)
 **Unweighted** and **guarantees** shortest path.
