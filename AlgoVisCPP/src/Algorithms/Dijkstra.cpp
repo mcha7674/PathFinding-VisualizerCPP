@@ -46,7 +46,7 @@ namespace Algorithms
 				parentHash[m_Grid->getCellID(r, c)] = { r0, c0 };
 				// update visiting node cost
 				int prevCost = cellCost;
-				int newCost = prevCost + m_Grid->getCellWeight(r, c);
+				int newCost = prevCost + m_Grid->getCellWeight(r, c) + 1; // add 1 because that is the default cost to move
 				// Check if this new cell is the end point
 				if (m_Grid->getCellType(r, c) == cellType::END)
 				{

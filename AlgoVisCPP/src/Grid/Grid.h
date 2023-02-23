@@ -16,7 +16,7 @@ struct Cell
 	Cell() { reset(); }
 	void reset()
 	{
-		weight = 1;
+		weight = 0;
 		m_State = cellState::UNVISITED;
 		m_Type = cellType::NORMAL;
 	}

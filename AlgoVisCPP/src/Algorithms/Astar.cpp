@@ -8,7 +8,22 @@ namespace Algorithms
 		int endR = endCoord.first;
 		int endC = endCoord.second;
 		// Euclidean distance Heuristic
-		return (int)sqrt(pow(endR - r,2) + pow(endC - c,2));
+		return (int)(sqrt(pow((endR - r),2) + pow((endC - c),2)));
+	}
+	int Astar::ChebyshevHeuristic(int r, int c)
+	{
+		int endR = endCoord.first;
+		int endC = endCoord.second;
+		int dx = abs(endR - r);
+		int dy = abs(endC - c);
+		return std::max(dx, dy);
+	}
+	int Astar::ManhattanHeuristic(int r, int c)
+	{
+		int endR = endCoord.first;
+		int endC = endCoord.second;
+		// Euclidean distance Heuristic
+		return abs((endR - r)) + abs((endC - c));
 	}
 	
 	// Init 
@@ -18,6 +33,9 @@ namespace Algorithms
 		PathFinder::Init(start);
 		// costs hash
 		Gcost.clear();
+		for (int id = 0; id < m_Grid->getHeight() * m_Grid->getWidth(); id++) {
+			Gcost[id] = INT_MAX;
+		}
 		// Clear Previous Queue if Any
 		minQ = {};
 		// push Cell ID
@@ -37,6 +55,7 @@ namespace Algorithms
 		if (!minQ.empty() && !endFound)
 		{
 			int cell = minQ.top().first;
+			int currGscore = Gcost[cell] + 1;
 			int r0 = m_Grid->getCellCoord(cell).first;
 			int c0 = m_Grid->getCellCoord(cell).second;
 			minQ.pop();
@@ -54,25 +73,37 @@ namespace Algorithms
 				if (r < 0 || c < 0 || r >= m_Grid->getHeight() || c >= m_Grid->getWidth()) { continue; }
 				// skip wall cells
 				if (m_Grid->getCellType(r, c) == cellType::WALL) continue;
-				if (m_Grid->getCellState(r, c) == cellState::VISITED || m_Grid->getCellState(r, c) == cellState::VISITING) continue;
-				// set unvisited node as visiting
-				m_Grid->setCellState(r, c, cellState::VISITING);
-				// save nodes parent
-				parentHash[m_Grid->getCellID(r, c)] = { r0, c0 };
-				// Calculations
-				// update costs of this cell
-				int GCost = Gcost[cell] + m_Grid->getCellWeight(r, c);
-				int HCost = EuclidHeuristic(r, c);
-				int FCost = GCost + HCost;
-				Gcost[m_Grid->getCellID(r, c)] = GCost;
-				// Check if this new cell is the end point
+				//if (m_Grid->getCellState(r, c) == cellState::VISITED || m_Grid->getCellState(r, c) == cellState::VISITING) continue;
+				// 
+				/// Check if this new cell is the end point
 				if (m_Grid->getCellType(r, c) == cellType::END)
 				{
 					InitPath(cell);
 					endFound = true;
 					break;
 				}
-				minQ.push({ m_Grid->getCellID(r, c), std::make_pair(FCost, HCost) });
+				// set unvisited node as visiting
+				// save nodes parent
+				
+				// Calculations
+				// update costs of this cell
+				if (currGscore < Gcost[m_Grid->getCellID(r, c)]) {
+					m_Grid->setCellState(r, c, cellState::VISITING);
+					Gcost[m_Grid->getCellID(r, c)] = currGscore + m_Grid->getCellWeight(r, c);
+					int GCost = Gcost[m_Grid->getCellID(r, c)];
+					int HCost = 0;
+					if (m_numSearchDirections == 4) {
+						HCost = EuclidHeuristic(r, c);
+						//HCost = ManhattanHeuristic(r, c);
+					}
+					else { HCost = EuclidHeuristic(r, c); }
+					int FCost = GCost + HCost;
+					parentHash[m_Grid->getCellID(r, c)] = { r0, c0 };
+					minQ.push({ m_Grid->getCellID(r, c), std::make_pair(FCost, HCost) });
+				}
+				
+				
+				
 			}
 			return true; // Algorithm continues running
 		}

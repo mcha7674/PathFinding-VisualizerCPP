@@ -72,7 +72,7 @@ void Grid::RenderGrid(bool& isAlgoRunning)
 				case cellState::UNVISITED: // if unvisited, no need to render a quad.
 					if (getCellType(i, j) == cellType::NORMAL) {
 						// Draw Weighted Normal Cells
-						if (getCellWeight(i, j) > 1) {
+						if (getCellWeight(i, j) > 0) {
 							// Set limits - implement oncec color class is implemented
 							glm::vec4 colorWeight = {
 								colors.WeightedCell.x - (getCellWeight(i, j) * 5) / 255.0f,
