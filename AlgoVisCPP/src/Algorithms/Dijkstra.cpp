@@ -17,6 +17,7 @@ namespace Algorithms
 		minQ = {};
 		// push Cell ID
 		minQ.push({ m_Grid->getCellID(start.first, start.second), 0 });
+		startCoord = start;
 		// Init cost hash with start 
 		cost[minQ.top().first] = 0;
 	}
@@ -29,6 +30,7 @@ namespace Algorithms
 			// grab cell id
 			int curr = minQ.top().first;
 			int currCost = cost[curr] + 1; // add 1 because each move to another cell by default costs 1
+			if (m_Grid->getCellCoord(curr) == startCoord) { currCost = cost[curr]; }
 			int r0 = m_Grid->getCellCoord(curr).first;
 			int c0 = m_Grid->getCellCoord(curr).second;
 			minQ.pop();
@@ -47,13 +49,15 @@ namespace Algorithms
 				if (r < 0 || c < 0 || r >= m_Grid->getHeight() || c >= m_Grid->getWidth()) { continue; }
 				// skip wall cells
 				if (m_Grid->getCellType(r, c) == cellType::WALL) continue;
+				// Skip visited/visiting
+				if (m_Grid->getCellState(r, c) == cellState::VISITED || m_Grid->getCellState(r, c) == cellState::VISITING) continue;
 				// End Condition
 				if (m_Grid->getCellType(r, c) == cellType::END)
 				{
 					InitPath(curr);
 					endFound = true;
 					break;
-				} //
+				} 
 				else if (currCost < cost[m_Grid->getCellID(r, c)]) {
 					// mark this cell as a visiting cell!
 					m_Grid->setCellState(r, c, cellState::VISITING);
@@ -66,10 +70,8 @@ namespace Algorithms
 					minQ.push({ m_Grid->getCellID(r, c), neighborCost });
 				}
 			}
-			return true; // Algorithm continues running
+			return true;
 		}
-		// Program only reaches this portion if End is found Or Queue was empty
-		// is path update returns true, it means we continue to update next frame
 		return PathUpdate();
 	}
 

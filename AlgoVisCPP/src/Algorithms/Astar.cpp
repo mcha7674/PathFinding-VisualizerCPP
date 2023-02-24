@@ -23,7 +23,7 @@ namespace Algorithms
 		int endR = endCoord.first;
 		int endC = endCoord.second;
 		// Euclidean distance Heuristic
-		return abs((endR - r)) + abs((endC - c));
+		return abs(endR - r) + abs(endC - c);
 	}
 	
 	// Init 
@@ -33,6 +33,7 @@ namespace Algorithms
 		PathFinder::Init(start);
 		// costs hash
 		Gcost.clear();
+		count = 0;
 		// fill cost hash with default gcost values for every cell
 		for (int id = 0; id < m_Grid->getHeight() * m_Grid->getWidth(); id++) {
 			Gcost[id] = INT_MAX;
@@ -40,7 +41,7 @@ namespace Algorithms
 		// Clear Previous Queue if Any
 		minQ = {};
 		// push Cell ID
-		minQ.push({ m_Grid->getCellID(start.first, start.second), 0});
+		minQ.push({ m_Grid->getCellID(start.first, start.second), {0,0} });
 		// Init Hash with initial distance of zero for the start node
 		Gcost[minQ.top().first] = 0;
 		// Initialize Coords
@@ -56,9 +57,10 @@ namespace Algorithms
 		{
 			// grab cell id
 			int curr = minQ.top().first;
-			int currGscore = Gcost[curr] + 1; // add 1 because each move to another cell by default costs 1
 			int r0 = m_Grid->getCellCoord(curr).first;
 			int c0 = m_Grid->getCellCoord(curr).second;
+			int currGscore = Gcost[curr] + 1; // add 1 because each move to another cell by default costs 1
+			if (m_Grid->getCellCoord(curr) == startCoord) { currGscore = Gcost[curr];}
 			minQ.pop();
 			// This cell is not a visited cell
 			m_Grid->setCellState(r0, c0, cellState::VISITED);
@@ -75,14 +77,16 @@ namespace Algorithms
 				if (r < 0 || c < 0 || r >= m_Grid->getHeight() || c >= m_Grid->getWidth()) { continue; }
 				// skip wall cells
 				if (m_Grid->getCellType(r, c) == cellType::WALL) continue;
+				if (m_Grid->getCellState(r, c) == cellState::VISITED || m_Grid->getCellState(r, c) == cellState::VISITING) continue;
 				// End Condition
 				if (m_Grid->getCellType(r, c) == cellType::END)
 				{
 					InitPath(curr);
 					endFound = true;
 					break;
-				} //
-				else if (currGscore < Gcost[m_Grid->getCellID(r, c)]) {
+				} 
+				if (currGscore < Gcost[m_Grid->getCellID(r, c)]) {
+					count++;
 					// mark this cell as a visiting cell!
 					m_Grid->setCellState(r, c, cellState::VISITING);
 					// update gscore of this neighbor cell, apply its weight if it has any
@@ -90,14 +94,14 @@ namespace Algorithms
 					int GCost = Gcost[m_Grid->getCellID(r, c)];
 					// calculate the heuristic
 					int HCost = 0;
-					if (m_numSearchDirections == 4) { HCost = EuclidHeuristic(r, c); }
-					else { HCost = EuclidHeuristic(r, c); }
+					if (m_numSearchDirections == 4) { HCost = ManhattanHeuristic(r, c); }
+					else { HCost = ChebyshevHeuristic(r, c); }
 					// Calculate the FCost
 					int FCost = GCost + HCost;
 					// Update the Parent of the neighbor to the current cell
 					parentHash[m_Grid->getCellID(r, c)] = { r0, c0 };
 					// Add the neighbor to the priority queue
-					minQ.push({ m_Grid->getCellID(r, c), FCost });
+					minQ.push({ m_Grid->getCellID(r, c), {FCost, HCost} });
 				}
 			}
 			return true; // Algorithm continues running

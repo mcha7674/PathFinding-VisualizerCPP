@@ -16,7 +16,7 @@ namespace GLCore {
 	class Application
 	{
 	public:
-		Application(const std::string& name = "OpenGL Sandbox", uint32_t width = 1280, uint32_t height = 720);
+		Application(const std::string& name = "OpenGL PathFinding Visualizer", uint32_t width = 1280, uint32_t height = 720);
 		virtual ~Application() = default;
 
 		void Run(); // main program function that executes all layers

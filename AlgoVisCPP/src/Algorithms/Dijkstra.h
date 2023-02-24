@@ -23,6 +23,7 @@ namespace Algorithms
 		std::priority_queue <std::pair<int, int>, std::vector<std::pair<int, int>>, PairCompare > minQ;
 		std::shared_ptr<Grid> m_Grid;
 		std::unordered_map<int, int> cost;
+		std::pair<int, int> startCoord;
 	};
 
 }

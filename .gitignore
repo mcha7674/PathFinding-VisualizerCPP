@@ -13,5 +13,3 @@
 *.vcxproj.filters
 *.vcxproj.user
 
-# dont add .git file
-.git/
