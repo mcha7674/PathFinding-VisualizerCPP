@@ -41,7 +41,7 @@ namespace Algorithms
 		// Clear Previous Queue if Any
 		minQ = {};
 		// push Cell ID
-		minQ.push({ m_Grid->getCellID(start.first, start.second), {0,0} });
+		minQ.push({ m_Grid->getCellID(start.first, start.second), {0, 0, 0} });
 		// Init Hash with initial distance of zero for the start node
 		Gcost[minQ.top().first] = 0;
 		// Initialize Coords
@@ -94,14 +94,14 @@ namespace Algorithms
 					int GCost = Gcost[m_Grid->getCellID(r, c)];
 					// calculate the heuristic
 					int HCost = 0;
-					if (m_numSearchDirections == 4) { HCost = ManhattanHeuristic(r, c); }
+					if (m_numSearchDirections == 4) { HCost = ChebyshevHeuristic(r, c); }
 					else { HCost = ChebyshevHeuristic(r, c); }
 					// Calculate the FCost
 					int FCost = GCost + HCost;
 					// Update the Parent of the neighbor to the current cell
 					parentHash[m_Grid->getCellID(r, c)] = { r0, c0 };
 					// Add the neighbor to the priority queue
-					minQ.push({ m_Grid->getCellID(r, c), {FCost, HCost} });
+					minQ.push({ m_Grid->getCellID(r, c), {FCost, HCost, count} });
 				}
 			}
 			return true; // Algorithm continues running

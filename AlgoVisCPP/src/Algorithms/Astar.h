@@ -7,7 +7,7 @@ namespace Algorithms
 
 	// compare the addition of both the Fcost and the Hcost
 	// if both fcosts are the same, but 1 has a lower h cost, their sum will be lower and the priority queue will swap them.
-	class AstarCompare
+	/*class AstarCompare
 	{
 	public:
 		bool operator()(std::pair<int, std::pair<int, int>> pair1, std::pair<int, std::pair<int, int>> pair2)
@@ -15,6 +15,19 @@ namespace Algorithms
 			if ((pair1.second.first) == (pair2.second.first)) 
 				return (pair1.second.second) > (pair2.second.second);
 			return (pair1.second.first) > (pair2.second.first);
+		}
+	};*/
+	class AstarCompare
+	{
+	public:
+		bool operator()(std::pair<int, std::vector<int>> pair1, std::pair<int, std::vector<int>> pair2)
+		{
+			if ((pair1.second[0]) == (pair2.second[0])) {
+				if ((pair1.second[1]) == (pair2.second[1]))
+					return (pair1.second[2]) > (pair2.second[2]);
+				else return (pair1.second[1]) > (pair2.second[1]);
+			}
+			return (pair1.second[0]) > (pair2.second[0]);
 		}
 	};
 
@@ -28,6 +41,7 @@ namespace Algorithms
 			m_numSearchDirections = numSearchDirections;	
 			
 		}
+
 		virtual ~Astar() = default;
 		virtual void Init(std::pair<int, int> start) override;
 		virtual bool Update() override;
@@ -37,8 +51,8 @@ namespace Algorithms
 		int ManhattanHeuristic(int r, int c);
 	private:
 		// minimum priority queue - first element in pair is the Cell ID, the second element is {FCost, HCost}
-		std::priority_queue <std::pair<int, std::pair<int, int>>, 
-			std::vector<std::pair<int, std::pair<int, int>>>, AstarCompare > minQ;
+		//std::priority_queue <std::pair<int, std::pair<int, int>>, std::vector<std::pair<int, std::pair<int, int>>>, AstarCompare > minQ;
+		std::priority_queue <std::pair<int, std::vector<int>>, std::vector<std::pair<int, std::vector<int>>>, AstarCompare > minQ;
 		std::shared_ptr<Grid> m_Grid;
 		std::unordered_map<int, int> Gcost; // cell id, cost
 		std::pair<int, int> startCoord;
