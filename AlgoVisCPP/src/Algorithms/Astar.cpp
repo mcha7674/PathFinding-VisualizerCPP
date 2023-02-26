@@ -94,7 +94,7 @@ namespace Algorithms
 					int GCost = Gcost[m_Grid->getCellID(r, c)];
 					// calculate the heuristic
 					int HCost = 0;
-					if (m_numSearchDirections == 4) { HCost = ChebyshevHeuristic(r, c); }
+					if (m_numSearchDirections == 4) { HCost = ManhattanHeuristic(r, c); }
 					else { HCost = ChebyshevHeuristic(r, c); }
 					// Calculate the FCost
 					int FCost = GCost + HCost;
