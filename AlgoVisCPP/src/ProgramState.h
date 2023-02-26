@@ -4,7 +4,7 @@
 #include <memory>
 #include <string>
 
-struct ProgState {
+struct ProgramState {
 	// store mouse position state
 	int mouseX;
 	int mouseY;
@@ -21,10 +21,10 @@ struct ProgState {
 	// Is the algorithm searching 4ways or 8 ways?
 	int numSearchDirections;
 	// Grid Changed State
-	ProgState() {
-		Reset();
+	ProgramState() {
+		DefaultState();
 	}
-	void Reset() {
+	void DefaultState() {
 		mouseX = mouseY = 0;
 		speed = 1;
 		mouseB1Pressed = mouseB2Pressed = isAlgoRunning = false;

@@ -22,18 +22,22 @@ namespace GLCore::Utils {
 		float GetZoomLevel() const { return m_ZoomLevel; }
 		void SetZoomLevel(float level) { m_ZoomLevel = level; }
 		void SetAspectRatio(float ratio) { m_AspectRatio = ratio; }
+		void SetCamTranslationSpeed(float speed) { m_CameraTranslationSpeed = speed; }
 		float GetAspectRatio() const { return m_AspectRatio; }
 		float GetCamTranslationSpeed() const { return m_CameraTranslationSpeed; }
 		glm::vec3 GetCamPos() const { return m_CameraPosition; }
 
 		void ResetCamera();
-
+		void SetMaxZoomOut(float val) { m_MaxZoomOut = val; }
+		void SetMaxZoomIn(float val){ m_MaxZoomIn = val; }
 	private:
 		bool OnMouseScrolled(MouseScrolledEvent& e);
 		bool OnWindowResized(WindowResizeEvent& e);
 	private:
 		float m_AspectRatio;
 		float m_ZoomLevel = 1.0f;
+		float m_MaxZoomIn = 0.1f;
+		float m_MaxZoomOut = 1.0f;
 		OrthographicCamera m_Camera;
 
 		bool m_Rotation;
