@@ -4,7 +4,6 @@ using namespace GLCore;
 using namespace GLCore::Utils;
 
 static std::pair<float, float> origin;
-std::pair<float, float> modOrigin;
 float coordLeft = -50;
 float coordRight = 50;
 float coordBottom = -50;
@@ -18,11 +17,17 @@ AlgoVis::AlgoVis()
 		(float)Application::Get().GetWindow().GetHeight(), false, 1.0f))
 {
 	float startZoom = 0.2f;
-	origin = {coordLeft, coordBottom};
-	modOrigin = { origin.first * startZoom, origin.second * startZoom };
 	m_CameraController.SetZoomLevel(startZoom);
-	m_CameraController.GetCamera().SetProjection(coordLeft * startZoom, coordRight * startZoom, coordBottom * startZoom, coordTop * startZoom);
-	grid = std::make_shared<Grid>(coordWidth, coordHeight, m_CameraController.GetCamera().GetViewProjectionMatrix());
+
+	float left = std::round(coordLeft * startZoom);
+	float right = std::round(coordRight * startZoom);
+	float bottom = std::round(coordBottom * startZoom);
+	float top = std::round(coordTop * startZoom);
+	float width = abs(left) + abs(bottom);
+	float height = abs(bottom) + abs(top);
+	m_CameraController.GetCamera().SetProjection(left, right, bottom, top);
+	origin = { left, bottom};
+	grid = std::make_shared<Grid>((int)width, (int)height, m_CameraController.GetCamera().GetViewProjectionMatrix());
 }
 void AlgoVis::OnAttach()
 {   // AlgoVis's gl prelims 
@@ -50,10 +55,15 @@ void AlgoVis::OnEvent(Event& event)
 			
 	dispatcher.Dispatch<MouseScrolledEvent>(
 		[&](MouseScrolledEvent& e) {
-			std::cout << "ZOOM: " << currZoomLvl << std::endl;
-			m_CameraController.GetCamera().SetProjection(coordLeft * currZoomLvl, coordRight * currZoomLvl, coordBottom * currZoomLvl, coordTop * currZoomLvl);
-			origin = { coordLeft, coordBottom };
-			modOrigin = { origin.first * currZoomLvl, origin.second * currZoomLvl };
+			float left = std::round(coordLeft * currZoomLvl);
+			float right = std::round(coordRight * currZoomLvl);
+			float bottom = std::round(coordBottom * currZoomLvl);
+			float top = std::round(coordTop * currZoomLvl);
+			float width = abs(left) + abs(bottom);
+			float height = abs(bottom) + abs(top);
+			m_CameraController.GetCamera().SetProjection(left,right, bottom, top);
+			origin = { left, bottom};
+			grid->Resize((int)width, (int)height);
 			return true;
 		});
 	dispatcher.Dispatch<WindowResizeEvent>(
@@ -90,7 +100,7 @@ void AlgoVis::OnUpdate(Timestep ts)
 	grid->UpdateViewProjection(m_CameraController.GetCamera().GetViewProjectionMatrix());
 	grid->Draw(origin);
 	
-	grid->FillGrid(modOrigin);
+	grid->FillGrid(origin);
 	
 }
 /*  UI IMGUI Render Layer  */
