@@ -10,6 +10,12 @@ float coordBottom = -50;
 float coordTop = 50;
 int coordWidth = abs(coordLeft) + abs(coordRight);
 int coordHeight = abs(coordBottom) + abs(coordTop);
+float left = coordLeft;
+float right = coordRight;
+float bottom = coordBottom;
+float top = coordTop;
+float width = coordWidth;
+float height = coordHeight;
 
 AlgoVis::AlgoVis()
 	:Layer("C++ Pathfinding Algorithm Visualizer"), 
@@ -19,15 +25,15 @@ AlgoVis::AlgoVis()
 	float startZoom = 0.2f;
 	m_CameraController.SetZoomLevel(startZoom);
 
-	float left = std::round(coordLeft * startZoom);
-	float right = std::round(coordRight * startZoom);
-	float bottom = std::round(coordBottom * startZoom);
-	float top = std::round(coordTop * startZoom);
-	float width = abs(left) + abs(bottom);
-	float height = abs(bottom) + abs(top);
+	left = std::round(coordLeft * startZoom);
+	right = std::round(coordRight * startZoom);
+	bottom = std::round(coordBottom * startZoom);
+	top = std::round(coordTop * startZoom);
+	width = abs(left) + abs(bottom);
+	height = abs(bottom) + abs(top);
 	m_CameraController.GetCamera().SetProjection(left, right, bottom, top);
 	origin = { left, bottom};
-	grid = std::make_shared<Grid>((int)width, (int)height, m_CameraController.GetCamera().GetViewProjectionMatrix());
+	grid = std::make_shared<Grid>((int)(height), (int)(width), m_CameraController.GetCamera().GetViewProjectionMatrix());
 }
 void AlgoVis::OnAttach()
 {   // AlgoVis's gl prelims 
@@ -55,15 +61,15 @@ void AlgoVis::OnEvent(Event& event)
 			
 	dispatcher.Dispatch<MouseScrolledEvent>(
 		[&](MouseScrolledEvent& e) {
-			float left = std::round(coordLeft * currZoomLvl);
-			float right = std::round(coordRight * currZoomLvl);
-			float bottom = std::round(coordBottom * currZoomLvl);
-			float top = std::round(coordTop * currZoomLvl);
-			float width = abs(left) + abs(bottom);
-			float height = abs(bottom) + abs(top);
+			left = std::round(coordLeft * currZoomLvl);
+			right = std::round(coordRight * currZoomLvl);
+			bottom = std::round(coordBottom * currZoomLvl);
+			top = std::round(coordTop * currZoomLvl);
+			width = abs(left) + abs(bottom);
+			height = abs(bottom) + abs(top);
 			m_CameraController.GetCamera().SetProjection(left,right, bottom, top);
 			origin = { left, bottom};
-			grid->Resize((int)width, (int)height);
+			grid->Resize((int)(height), (int)(width));
 			return true;
 		});
 	dispatcher.Dispatch<WindowResizeEvent>(
@@ -112,7 +118,7 @@ void AlgoVis::OnImGuiRender()
 void AlgoVis::TransformMousePos(float const scrMouseX, float const scrMouseY, float currZoom)
 {
 	// Transform the mouse positions from screen space into our Coordinate system
-	int coordSysWidth = coordWidth * currZoom;
+	int coordSysWidth = (int)(width * currZoom);
 	state.mouseX = (coordSysWidth) * (scrMouseX / 1000);
 	state.mouseY = (coordSysWidth) - ((coordSysWidth) * (scrMouseY / 1000));
 	std::cout << "Transformed Mouse Coords of (" << state.mouseX << ", " << state.mouseY << ")" << std::endl;
