@@ -73,7 +73,7 @@ namespace GLCore::Utils {
 
 	bool OrthographicCameraController::OnMouseScrolled(MouseScrolledEvent& e)
 	{
-		m_ZoomLevel -= e.GetYOffset() * 0.1f;
+		m_ZoomLevel -= e.GetYOffset() * 0.01f;
 		m_ZoomLevel = std::max(m_ZoomLevel, m_MaxZoomIn);
 		m_ZoomLevel = std::min(m_ZoomLevel, m_MaxZoomOut);
 		m_Camera.SetProjection(-m_AspectRatio * m_ZoomLevel, m_AspectRatio * m_ZoomLevel, -m_ZoomLevel, m_ZoomLevel);
