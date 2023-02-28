@@ -21,7 +21,6 @@ namespace Algorithms
 	private:
 		std::queue <int> q;
 		std::shared_ptr<Grid> m_Grid;
-		int pathLength =0;
 	};
 
 

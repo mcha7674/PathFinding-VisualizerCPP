@@ -11,7 +11,7 @@ namespace Algorithms
 		// Clear Previous Queue if Any
 		q = {};
 		// push Cell ID
-		q.push(m_Grid->getCellID(m_Start.first, m_Start.second));
+		q.push(m_Grid->GetCellID(m_Start.first, m_Start.second));
 	}
 	// Update 
 	bool BFS::Update()
@@ -20,10 +20,10 @@ namespace Algorithms
 		if (!q.empty() && !endFound) 
 		{
 			int cell = q.front();
-			int r0 = m_Grid->getCellCoord(cell).first;
-			int c0 = m_Grid->getCellCoord(cell).second;
+			int r0 = m_Grid->GetCellCoord(cell).first;
+			int c0 = m_Grid->GetCellCoord(cell).second;
 			q.pop();
-			m_Grid->setCellState(r0, c0, cellState::VISITED);
+			m_Grid->SetCellState(r0, c0, cellState::VISITED);
 			// iterate every neighbor
 			for (int i = 0; i < m_numSearchDirections; i++)
 			{
@@ -34,23 +34,23 @@ namespace Algorithms
 					c = c0 + dc8[i];
 				}
 				// boundary check
-				if (r < 0 || c < 0 || r >= m_Grid->getHeight() || c >= m_Grid->getWidth()) { continue; }
+				if (r < 0 || c < 0 || r >= m_Grid->GetHeight() || c >= m_Grid->GetWidth()) { continue; }
 				// skip wall cells
-				if (m_Grid->getCellType(r, c) == cellType::WALL) continue;
+				if (m_Grid->GetCellType(r, c) == cellType::WALL) continue;
 				// skip visited cells
-				if (m_Grid->getCellState(r, c) == cellState::VISITED || m_Grid->getCellState(r, c) == cellState::VISITING) continue;
+				if (m_Grid->GetCellState(r, c) == cellState::VISITED || m_Grid->GetCellState(r, c) == cellState::VISITING) continue;
 				// set unvisited node as visiting
-				m_Grid->setCellState(r, c, cellState::VISITING);
+				m_Grid->SetCellState(r, c, cellState::VISITING);
 				// save nodes parent
-				parentHash[m_Grid->getCellID(r, c)] = { r0, c0 };
+				parentHash[m_Grid->GetCellID(r, c)] = { r0, c0 };
 				// Check if this new cell is the end point
-				if (m_Grid->getCellType(r, c) == cellType::END)
+				if (m_Grid->GetCellType(r, c) == cellType::END)
 				{	
 					InitPath(cell);
 					endFound = true;
 					break;
 				}
-				q.push(m_Grid->getCellID(r, c));
+				q.push(m_Grid->GetCellID(r, c));
 			}
 			return true; // Algorithm continues runnint
 		}
@@ -62,10 +62,10 @@ namespace Algorithms
 	bool BFS::PathUpdate()
 	{
 		if (!endFound) return false;
-		if (m_Grid->getCellType(currCell) != cellType::START)
+		if (m_Grid->GetCellType(currCell) != cellType::START)
 		{
-			m_Grid->setCellType(m_Grid->getCellCoord(currCell).first, m_Grid->getCellCoord(currCell).second, cellType::PATH);
-			currCell = m_Grid->getCellID(parentHash[currCell].first, parentHash[currCell].second);
+			m_Grid->SetCellType(m_Grid->GetCellCoord(currCell).first, m_Grid->GetCellCoord(currCell).second, cellType::PATH);
+			currCell = m_Grid->GetCellID(parentHash[currCell].first, parentHash[currCell].second);
 			return true;
 		}	
 		return false;

@@ -73,9 +73,9 @@ void AlgoVis::OnEvent(Event& event)
 			if (e.GetMouseButton() == MOUSE_BUTTON_1) {
 				grid->SetCellState(state.mouseX, state.mouseY, cellState::VISITED);	
 			}
-			
 			return true; // event handled
 		});
+
 }	
 ////////// Game Loop Layer /////////////
 void AlgoVis::OnUpdate(Timestep ts)

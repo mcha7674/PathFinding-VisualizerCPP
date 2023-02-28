@@ -6,6 +6,7 @@
 #include "Grid/Grid.h"
 #include "Layout.h"
 #include "ProgramState.h"
+#include "Algorithms/Algorithms.h"
 #include <cmath>
 class AlgoVis : public GLCore::Layer
 {
@@ -30,7 +31,7 @@ private:
 	// The Grid //
 	std::shared_ptr<Grid> grid;
 	// Chosen Algorithm //
-	//std::shared_ptr<Algorithms::PathFinder> currAlgo;
+	std::shared_ptr<Algorithms::PathFinder> currAlgo;
 	//////////  UI //////////
 	//std::unique_ptr<UI> ui;
 	////////// Rendering //////////

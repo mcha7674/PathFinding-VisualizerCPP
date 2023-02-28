@@ -29,13 +29,9 @@ struct Cell
 	{ 
 		SetDefault(); 
 	}
-	Cell()
-	{
-		row = col = -1;
-		SetDefault();
-	}
 	void SetDefault()
 	{
+		id = -1;
 		weight = 0;
 		m_State = cellState::UNVISITED;
 		m_Type = cellType::NORMAL;
@@ -45,4 +41,5 @@ struct Cell
 	int weight;
 	cellType m_Type;
 	cellState m_State;
+	int id;
 };
