@@ -1,5 +1,10 @@
 # C++ Pathfinding Algorithm Visualizer
-This is a grid pathfinding visualizer built using OpenGl, GLFW, GLAD, and ImGui.
+This is a WORK IN PROGRESS grid pathfinding visualizer built using OpenGl, GLFW, GLAD, and ImGui.
+
+<p align= "center">
+<img src="MandelBrotSet.PNG" width="600" height="600" />
+</p>
+
 ## Usage
 Only works on Windows. To use, clone or download this repo and go into the *scripts* folder.
 There is a windows batch file there that you can execute and it will build the Visual studio 2022 solution.
