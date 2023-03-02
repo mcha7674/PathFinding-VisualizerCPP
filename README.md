@@ -2,7 +2,7 @@
 This is a WORK IN PROGRESS grid pathfinding visualizer built using OpenGl, GLFW, GLAD, and ImGui.
 
 <p align= "center">
-<img src="Animation.gif" width="600" height="600" />
+<img src="Animation.gif" width="500" height="500" />
 </p>
 
 ## Usage
