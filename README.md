@@ -1,5 +1,5 @@
 # C++ Pathfinding Algorithm Visualizer
-This is a WORK IN PROGRESS grid pathfinding visualizer built using OpenGl, GLFW, GLAD, and ImGui.
+This is a grid pathfinding visualizer built using OpenGl, GLFW, GLAD, and ImGui in C++ for the intention of being able to visualize how a variety of pathfinding algorithms work step by step and in a variety of conditions.
 
 <p align= "center">
 <img src="Animation.gif" width="500" height="500" />
