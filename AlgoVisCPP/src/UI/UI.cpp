@@ -77,6 +77,7 @@ void UI::StartAndResets(ProgState &progState, std::shared_ptr<Algorithms::PathFi
         if (ImGui::Button("Reset") && !progState.isAlgoRunning)
         {	// Reset App
             grid->reset();
+            progState.Reset();
         }  
         ImGui::Dummy(ImVec2(ImGui::GetWindowWidth() / 3, 0)); ImGui::SameLine();
         // Reset Weights Button
@@ -89,6 +90,11 @@ void UI::StartAndResets(ProgState &progState, std::shared_ptr<Algorithms::PathFi
             if (!progState.isAlgoRunning && grid->isStartAndEndSet())
             {
                 // only set to true if algorithm chosen
+                // if algorithm totally complete, Rerun!
+                if (progState.algoFinished) {
+                    grid->clearPath(); // clear the last path as we are executing again
+                    currAlgo->Init(grid->getStartCoord()); // Initiate algorithm and clear data from a previous run
+                }
                 progState.isAlgoRunning = true;
                 std::cout << "Started Algorithm" << std::endl;
             }
@@ -98,6 +104,7 @@ void UI::StartAndResets(ProgState &progState, std::shared_ptr<Algorithms::PathFi
             }
         }
     }ImGui::End(); ImGui::PopStyleColor();
+
 }
 
 void UI::AlgoChoices(ProgState& progState, std::shared_ptr<Algorithms::PathFinder> &currAlgo, std::shared_ptr<Grid> grid)
@@ -133,6 +140,7 @@ void UI::AlgoChoices(ProgState& progState, std::shared_ptr<Algorithms::PathFinde
                     }
                     else if (n == 3) {
                         currAlgo.reset(new Algorithms::Astar(grid, progState.numSearchDirections));
+                        currAlgo->SetHeuristic(Algorithms::Heuristic::MANHATTAN);
                     }
                    
                     // Initiate the chosen algorithm
@@ -149,7 +157,7 @@ void UI::AlgoChoices(ProgState& progState, std::shared_ptr<Algorithms::PathFinde
     }ImGui::End(); ImGui::PopStyleColor();
 }
 
-void UI::Status(std::string status)
+void UI::Status(ProgState &progState)
 {
     static ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize |
         ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
@@ -160,7 +168,7 @@ void UI::Status(std::string status)
     {
         ImGui::SetWindowFontScale(1.6f);
         float win_width = ImGui::GetWindowSize().x;
-        float text_width = ImGui::CalcTextSize(status.c_str()).x;
+        float text_width = ImGui::CalcTextSize(progState.status.c_str()).x;
         // calculate the indentation that centers the text on one line, relative
         // to window left, regardless of the `ImGuiStyleVar_WindowPadding` value
         float text_indentation = (win_width - text_width) * 0.5f;
@@ -174,9 +182,18 @@ void UI::Status(std::string status)
 
         ImGui::SameLine(text_indentation);
         ImGui::PushTextWrapPos(win_width - text_indentation);
-        ImGui::TextWrapped(status.c_str());
+        ImGui::TextWrapped(progState.status.c_str());
         ImGui::PopTextWrapPos();
     }ImGui::End();
+
+    // Speed Status
+    std::string speed = "Speed: " + std::to_string(progState.speed);
+    ImGui::SetNextWindowBgAlpha(0.0f);
+    ImGui::SetNextWindowPos(ImVec2((work_pos.x + work_size.x) *0.5 - 200, work_pos.y + 20), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+    if (ImGui::Begin("Speed Stat", NULL, window_flags)) {
+        ImGui::SetWindowFontScale(1.5f);
+        ImGui::Text(speed.c_str());
+    } ImGui::End();
 }
 
 void UI::Toggles(std::shared_ptr<Layout> &layout, ProgState& progState, std::shared_ptr<Algorithms::PathFinder>& currAlgo, std::shared_ptr<Grid> grid) {
@@ -189,7 +206,7 @@ void UI::Toggles(std::shared_ptr<Layout> &layout, ProgState& progState, std::sha
     if (ImGui::Begin("##SearchDirections", NULL, window_flags))
     {
         ImGui::SetWindowFontScale(1.1f);
-        // Fast Forward Toggles    
+        // Directional search Toggles    
         if (ImGui::RadioButton("8-Way\nSearch", &progState.numSearchDirections, 8)) { currAlgo->setNumSearchDirections(8); } ImGui::SameLine();
         if (ImGui::RadioButton("4-Way\nSearch", &progState.numSearchDirections, 4)) { currAlgo->setNumSearchDirections(4); } ImGui::SameLine();
     } ImGui::End(); ImGui::PopStyleColor();
@@ -201,7 +218,7 @@ void UI::Toggles(std::shared_ptr<Layout> &layout, ProgState& progState, std::sha
     {
         ImGui::SetWindowFontScale(1.1f);
         
-        // Fast Forward Toggles    
+        // Grid Size Toggles    
         if (ImGui::RadioButton("Small \nGrid", temp, 0)) {layout->setCoordSys(20); 
         grid->reset();
         grid->Init(layout->uiAdjustedGridHeight(),
@@ -219,19 +236,38 @@ void UI::Toggles(std::shared_ptr<Layout> &layout, ProgState& progState, std::sha
         } ImGui::SameLine();
         
     } ImGui::End(); ImGui::PopStyleColor();
-}
 
-void UI::Legend()
-{
-    static ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize |
-        ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
-    ImGui::SetNextWindowBgAlpha(0.5f); // Transparent background
-    ImGui::SetNextWindowPos(ImVec2((work_pos.x + work_size.x) * 0.5, work_pos.y + 210), ImGuiCond_Always, ImVec2(0.5f, 0.0f));
-    ImGui::SetNextWindowSize(ImVec2(800, 80));
-    ImGui::SetNextWindowCollapsed(1, ImGuiCond_Once);
-    if (ImGui::Begin("Legend", NULL, window_flags)) {
-        ImGui::SetWindowFontScale(1.3f);
-    } ImGui::End(); 
+    static int currNode = 1;
+    if (grid->isStartAndEndSet()) {
+        ImGui::SetNextWindowBgAlpha(0.0f);
+        ImGui::SetNextWindowPos(ImVec2((work_pos.x + work_size.x) * 0.5, work_pos.y + 230.0f), ImGuiCond_Always, ImVec2(0.5f, 0.0f));
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(20, 20, 100, 1));
+        if (ImGui::Begin("##NodePlacement", NULL, window_flags))
+        {
+            ImGui::SetWindowFontScale(1.5f);
+            // Directional search Toggles    
+            if (ImGui::RadioButton("Place\nWall Node", &currNode,  1)) { progState.currNodePlaceType = NodePlacement::WALL; } ImGui::SameLine();
+            if (ImGui::RadioButton("Place\nWeight Node", &currNode, 2)) { progState.currNodePlaceType = NodePlacement::WEIGHT; } ImGui::SameLine();
+        } ImGui::End(); ImGui::PopStyleColor();
+    }
+    else { currNode = 1; }
+    // Heurestic
+    static int currHeuristic = 1;
+    if (currAlgo->getName() == "Astar") {
+        ImGui::SetNextWindowBgAlpha(0.0f);
+        ImGui::SetNextWindowPos(ImVec2(work_pos.x + 5, work_pos.y + 230.0f), ImGuiCond_Always, ImVec2(0.0f, 0.0f));
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(20, 20, 100, 1));
+        if (ImGui::Begin("##Heuristic", NULL, window_flags))
+        {
+            ImGui::SetWindowFontScale(1.0f);
+            // Directional search Toggles    
+            if (ImGui::RadioButton("Manhattan\nHeuristic", &currHeuristic, 1)) { currAlgo->SetHeuristic(Algorithms::Heuristic::MANHATTAN); } ImGui::SameLine();
+            if (ImGui::RadioButton("Chebyshev\nHeuristic", &currHeuristic, 2)) { currAlgo->SetHeuristic(Algorithms::Heuristic::CHEBYSHEV); } ImGui::SameLine();
+            if (ImGui::RadioButton("Euclidean\nHeuristic", &currHeuristic, 3)) { currAlgo->SetHeuristic(Algorithms::Heuristic::EUCLIDEAN); } ImGui::SameLine();
+        } ImGui::End(); ImGui::PopStyleColor();
+    }
+    
+    
 }
 
 void UI::HelpMenu()
@@ -239,7 +275,7 @@ void UI::HelpMenu()
     static ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize |
         ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
     window_flags = ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoSavedSettings ;
-    ImGui::SetNextWindowBgAlpha(0.9f); // Transparent background
+    ImGui::SetNextWindowBgAlpha(0.9f); 
     ImGui::SetNextWindowPos(ImVec2((work_pos.x + work_size.x), work_pos.y + 0), ImGuiCond_Always, ImVec2(1.0f, 0.0f));
     ImGui::SetNextWindowSize(ImVec2(250, 195));
     ImGui::SetNextWindowCollapsed(1, ImGuiCond_Once);
@@ -248,9 +284,13 @@ void UI::HelpMenu()
     ImGui::Begin("Help Menu", NULL, window_flags);
         ImGui::SetWindowFontScale(1.2f);
         ImGui::TextWrapped("\t\tInstructions:"); 
-        ImGui::TextWrapped("Left click to place Start, End, and Wall cells.");
-        ImGui::TextWrapped("Right click to place down weights.");
-        ImGui::TextWrapped("Increase the weight by right clicking multiple times on a cell");
+        ImGui::TextWrapped("Left click to place Start, End, Wall, or Weight cells.");
+        ImGui::TextWrapped("");
+        ImGui::TextWrapped("Right click to remove Walls or Weights.");
+        ImGui::TextWrapped("");
+        ImGui::TextWrapped("Increase the weight by left clicking/moving mouse multiple times on a cell");
+        ImGui::TextWrapped("when Weight node is toggled");
+        ImGui::TextWrapped("");
         ImGui::TextWrapped("\t\tKey Bindings:"); 
         ImGui::TextWrapped("Change Grid Size:\n\tUP/DOWN Arrow Keys");
         ImGui::TextWrapped("Change Algorithm Speed:\n\tLEFT/RIGHT Arrow Keys");

@@ -3,7 +3,7 @@
 #include "Algorithms/Algorithms.h"
 #include <memory>
 #include <string>
-
+enum class NodePlacement{WALL=1, WEIGHT};
 struct ProgState {
 	// store mouse position state
 	int mouseX;
@@ -20,6 +20,10 @@ struct ProgState {
 	std::string status;
 	// Is the algorithm searching 4ways or 8 ways?
 	int numSearchDirections;
+	// Current Node placement
+	NodePlacement currNodePlaceType;
+	// did algo finish
+	bool algoFinished;
 	// Grid Changed State
 	ProgState() {
 		Reset();
@@ -27,7 +31,8 @@ struct ProgState {
 	void Reset() {
 		mouseX = mouseY = 0;
 		speed = 1;
-		mouseB1Pressed = mouseB2Pressed = isAlgoRunning = false;
+		currNodePlaceType = NodePlacement::WALL;
+		algoFinished = mouseB1Pressed = mouseB2Pressed = isAlgoRunning = false;
 		status = "Welcome To Pathfinding Vis! \tSet your start and end points and select an algorithm!";
 		numSearchDirections = 4;
 	}

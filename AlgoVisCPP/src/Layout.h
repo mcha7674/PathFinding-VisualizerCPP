@@ -16,6 +16,7 @@ public:
 		int CoordSys = 20, int uiSpace = 300)
 	{
 		m_coordSys = CoordSys;
+		gridHeight = m_coordSys;
 		m_scrDimensions = { screenWidth, screenHeight };
 		m_camControl = CamControl;
 		m_uiSpace = uiSpace;
@@ -27,6 +28,7 @@ public:
 	inline uint32_t getScrHeight() { return m_scrDimensions.second; }
 	inline uint32_t getScrWidth() { return m_scrDimensions.first; }
 	inline uint32_t getCoordSysDim() { return m_coordSys; }
+	inline int getGridHeight() { return gridHeight; }
 	inline void setUISpace(int uiSpace) { m_uiSpace = uiSpace; }
 	// Coordinate System Setters
 	void setCoordSys(int newCS) {
@@ -38,9 +40,9 @@ public:
 		std::cout << "Updating Screen Dimensions" << std::endl;
 	}
 	int uiAdjustedGridHeight() {
-		int newHeight = (int)((float)m_coordSys / (float)m_scrDimensions.second *
+		gridHeight = (int)((float)m_coordSys / (float)m_scrDimensions.second *
 			((float)m_scrDimensions.second - (float)m_uiSpace));
-		return newHeight;
+		return gridHeight;
 	}
 	
 	
@@ -49,6 +51,7 @@ private:
 	int m_coordSys;
 	// How much space in pixels is allocated to the UI
 	int m_uiSpace;
+	int gridHeight;
 	// Screen Height and Width
 	pair < int, int > m_scrDimensions;
 	// Pointer to the orthographic camera controller

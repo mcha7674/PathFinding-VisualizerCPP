@@ -6,6 +6,7 @@
 #include "../Algorithms/Algorithms.h"
 #include "../ProgramState.h"
 #include "../Layout.h"
+#include "../Color.h"
 using namespace GLCore;
 
 // Each UI Component needs to have an option for adjusting positioning and Scale //
@@ -22,9 +23,8 @@ public:
 	void StartAndResets(ProgState& progState, std::shared_ptr<Algorithms::PathFinder> &currAlgo, std::shared_ptr<Grid> grid);
 	void AlgoChoices(ProgState& progState, std::shared_ptr<Algorithms::PathFinder> &currAlgo, std::shared_ptr<Grid> grid);
 	void Toggles(std::shared_ptr<Layout>& layout, ProgState& progState, std::shared_ptr<Algorithms::PathFinder>& currAlgo, std::shared_ptr<Grid> grid);
-	void Status(std::string status = "Choose An Algorithm...");
+	void Status(ProgState& progState);
 	void HelpMenu();
-	void Legend();
 	// Getters
 	inline ImGuiIO& GetIO() { return *io; }
 	
@@ -35,11 +35,14 @@ private:
 	const ImGuiViewport* viewport;
 	ImVec2 work_pos;
 	ImVec2 work_size;
-
+	// For radio button use
 	int* temp= new int(0);
-
 	// shared pointer of camera controller
-	std::shared_ptr<Utils::OrthographicCameraController> m_CameraController;	
+	std::shared_ptr<Utils::OrthographicCameraController> m_CameraController;
+	/*Renderer renderer;
+	Quad quad;
+	Color colors;*/
+
 };
 
 

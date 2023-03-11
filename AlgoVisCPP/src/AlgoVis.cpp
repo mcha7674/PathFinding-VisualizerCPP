@@ -75,11 +75,11 @@ void AlgoVis::OnEvent(Event& event)
 			switch (e.GetKeyCode()) {
 			case KEY_RIGHT: // increase grid size by 5
 				progState.speed++;
-				std::cout << "Speed: " << progState.speed << std::endl;
+				if (progState.speed > 100) progState.speed = 100;
 				break;
 			case KEY_LEFT: // decrease grid size by 5
 				progState.speed--;
-				std::cout << "Speed: " << progState.speed << std::endl;
+				if (progState.speed < 0) progState.speed = 0;
 				break;
 			case KEY_SPACE: // Start Or Pause Algorithm
 				if (!progState.isAlgoRunning && grid->isStartAndEndSet())
@@ -138,15 +138,18 @@ void AlgoVis::OnEvent(Event& event)
 					// set to true, so that program recognizes if I am HOLDING DOWN the mouse button as I move.
 					progState.mouseB1Pressed = true; 
 					if (grid->isStartAndEndSet() && progState.mouseB1Pressed) {
-						if (grid->getCellType(row, col) != cellType::WALL)
+						if (progState.currNodePlaceType == NodePlacement::WALL) {
 							grid->setCellType(row, col, cellType::WALL);
-						else grid->setCellType(row, col, cellType::NORMAL);
+						}
+						else if (progState.currNodePlaceType == NodePlacement::WEIGHT) grid->addCellWeight(row, col, 1);
 					}
 				}
+				// Wall/weight deletion
 				else if (e.GetMouseButton() == MOUSE_BUTTON_2) {
 					progState.mouseB2Pressed = true;
-					if (grid->isStartAndEndSet() && progState.mouseB2Pressed) {
-						grid->addCellWeight(row, col, 1);
+					if (grid->getStartCoord() != std::make_pair(row, col) && grid->getEndCoord() != std::make_pair(row, col)) {
+						grid->setCellType(row, col, cellType::NORMAL);
+						grid->setCellWeight(row, col, 0);
 					}
 				}
 				return true;
@@ -156,17 +159,26 @@ void AlgoVis::OnEvent(Event& event)
 			[&](MouseMovedEvent& e) {
 				// while the button is pressed and start and end point already set, place down walls!
 				if (grid->isStartAndEndSet() && progState.mouseB1Pressed) {
-					grid->setCellType(row, col, cellType::WALL);
+					if (progState.currNodePlaceType == NodePlacement::WALL) {
+						grid->setCellType(row, col, cellType::WALL);
+					}
+					else if (progState.currNodePlaceType == NodePlacement::WEIGHT) grid->addCellWeight(row, col, 1);
 				}
+				// DELETION
 				if (grid->isStartAndEndSet() && progState.mouseB2Pressed) {
-					grid->addCellWeight(row, col, 1);
+					// Can't delete start and end!
+					if (grid->getStartCoord() != std::make_pair(row, col) && grid->getEndCoord() != std::make_pair(row, col)) {
+						grid->setCellType(row, col, cellType::NORMAL);
+						grid->setCellWeight(row, col, 0);
+					}
+					
 				}
 				return true;
 			});
 	}
 	
 }	
-////////// Game Loop Layer /////////////
+////////// Visualizer Loop Layer /////////////
 void AlgoVis::OnUpdate(Timestep ts)
 {
 	// Clear Window
@@ -179,9 +191,10 @@ void AlgoVis::OnUpdate(Timestep ts)
 	// Execute each Step of the Chosen Algorithm //
 	if (progState.isAlgoRunning) {
 		for (int i = 0; i < progState.speed; i++) {
+			progState.algoFinished = false;
 			progState.isAlgoRunning = currAlgo->Update();
 		}
-		//if (!progState.isAlgoRunning) { std::cout << "PATH LENGTH: " << currAlgo->getPathLength() << std::endl; }
+		if (!progState.isAlgoRunning) { progState.algoFinished = true; }
 	}
 	grid->RenderGrid(progState.isAlgoRunning); 
 }
@@ -196,9 +209,8 @@ void AlgoVis::OnImGuiRender()
 	// Sets The Toggle Radio Buttons
 	ui->Toggles(layout, progState, currAlgo, grid);
 	// Shows the current status of the user.
-	ui->Status(progState.status);
+	ui->Status(progState);
 	ui->HelpMenu();
-	ui->Legend();
 }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /* HELPER FUNCTIONS */

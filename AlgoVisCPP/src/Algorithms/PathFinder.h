@@ -23,6 +23,8 @@ namespace Algorithms
 		}
 	};
 
+	enum class Heuristic { MANHATTAN = 1, CHEBYSHEV, EUCLIDEAN };
+
 	class PathFinder 
 	{
 	public:
@@ -39,6 +41,7 @@ namespace Algorithms
 		virtual inline bool getEndState() { return endFound; }
 		// Setters
 		virtual inline void setNumSearchDirections(int num) {m_numSearchDirections = num; }
+		virtual inline void SetHeuristic(Heuristic h) { currHeuristic = h; };
 	protected:
 		// Every Algo Has A Name
 		std::string Name;
@@ -55,5 +58,6 @@ namespace Algorithms
 		static constexpr const int dc4[4] = { 1, 0, -1, 0 };
 		static constexpr const int dr8[8] = { 1, 1, 0, -1, -1, -1, 0, 1 };
 		static constexpr const int dc8[8] = { 0, 1, 1, 1, 0, -1, -1, -1 };
+		Heuristic currHeuristic;
 	};
 }

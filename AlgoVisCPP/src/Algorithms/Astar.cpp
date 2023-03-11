@@ -94,8 +94,10 @@ namespace Algorithms
 					int GCost = Gcost[m_Grid->getCellID(r, c)];
 					// calculate the heuristic
 					int HCost = 0;
-					if (m_numSearchDirections == 4) { HCost = ManhattanHeuristic(r, c); }
-					else { HCost = ChebyshevHeuristic(r, c); }
+					// Calculate HCost based on currently chosen heuristic
+					if (currHeuristic == Heuristic::MANHATTAN) { HCost = ManhattanHeuristic(r, c); }
+					else if ((currHeuristic == Heuristic::CHEBYSHEV)) { HCost = ChebyshevHeuristic(r, c); }
+					else if ((currHeuristic == Heuristic::EUCLIDEAN)) { HCost = EuclidHeuristic(r, c); }
 					// Calculate the FCost
 					int FCost = GCost + HCost;
 					// Update the Parent of the neighbor to the current cell
@@ -124,3 +126,4 @@ namespace Algorithms
 	}
 
 }
+

@@ -72,6 +72,7 @@ public:
 	inline std::pair<int, int> getEndCoord() { return gridProps->endCoord; }
 	std::vector<std::vector<Cell>> getGrid() { return grid; }	
 	// Setters
+	void setCellWeight(int row, int col, int newWeight) { grid[row][col].weight = newWeight; }
 	void setCellState(int row, int col, cellState state);
 	void setCellType(int row, int col, cellType type);
 	void addCellWeight(int row, int col, int newWeight);
