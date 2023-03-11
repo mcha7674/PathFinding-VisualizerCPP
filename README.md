@@ -27,4 +27,3 @@ By using the Left and Right arrow keys, one can speed up or slow down the algori
 Can start or pause the algorithm using the UI or with the space bar. 
 ## TODO
 2. Dynamic Status Updates on what is going on or what the user does in the text region above the legend
-3. Choose from a variety of distance heuristics for the Astar algorithm
